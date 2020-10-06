@@ -137,7 +137,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 						{
 							await unitOfWork.TryCommitTransactionAsync(async, cancellationToken);
 						}
-						catch (Exception e) when (provider.Options.AvoidFailureOnCommitRetries) // #TODO: Test
+						catch (Exception e) when (provider.Options.AvoidFailureOnCommitRetries) // #TODO: Test, particularly that transaction is now GONE! It must be gone.
 						{
 							throw new Exception("The operation failed on commit. Since it is possible that the commit succeeded, potential retries were avoided.", e);
 						}
