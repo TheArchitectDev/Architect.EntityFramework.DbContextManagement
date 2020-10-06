@@ -41,7 +41,7 @@ namespace EntityFramework.DbContextManagement.Example.Example
 				//.DefaultScopeOption(AmbientScopeOption.NoNesting)
 				.ExecutionStrategyOptions(ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure)));
 
-			hostBuilder.ConfigureServices(services => services.AddConcurrencyConflictDbContextProvider<ExampleDbContext>());
+			hostBuilder.ConfigureServices(services => services.AddConcurrencyConflictDbContextProvider<ExampleContext, ExampleDbContext>());
 
 			hostBuilder.ConfigureServices(services => services.AddSingleton<OrderApplicationService>().AddSingleton<OrderRepo>());
 

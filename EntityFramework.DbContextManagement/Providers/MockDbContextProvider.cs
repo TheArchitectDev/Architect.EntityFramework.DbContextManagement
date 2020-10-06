@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.Dummies;
 using Architect.EntityFramework.DbContextManagement.ExecutionStrategies;
+using Architect.EntityFramework.DbContextManagement.Providers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -17,10 +18,10 @@ namespace Architect.EntityFramework.DbContextManagement
 	/// A mock implementation to provide <see cref="DbContextScope"/> instances.
 	/// </para>
 	/// </summary>
-	public class MockDbContextProvider<TDbContext> : IDbContextProvider<TDbContext>
+	public class MockDbContextProvider<TContext, TDbContext> : OverridingDbContextProvider<TContext, TDbContext>
 		where TDbContext : DbContext
 	{
-		public DbContextScopeOptions Options { get; }
+		public override DbContextScopeOptions Options { get; }
 
 		private DbContextFactory<TDbContext> DbContextFactory { get; }
 
@@ -37,7 +38,7 @@ namespace Architect.EntityFramework.DbContextManagement
 					ThrowHelper.ThrowIncompatibleWithEfVersion<FieldInfo>(new Exception("Field DbContext._database does not exist."));
 
 				var dbContext = (TDbContext)FormatterServices.GetUninitializedObject(typeof(TDbContext));
-				
+
 				databaseField.SetValue(dbContext, new DummyDatabaseFacade(dbContext));
 
 				return dbContext;
@@ -88,7 +89,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		{
 		}
 
-		public virtual DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
+		public override DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
 		{
 			var result = DbContextScope.Create(this.DbContextFactory, scopeOption ?? this.Options.DefaultScopeOption);
 			return result;
@@ -100,16 +101,17 @@ namespace Architect.EntityFramework.DbContextManagement
 			return new DummyExecutionStrategy(dbContext);
 		}
 
-		IExecutionStrategy IDbContextProvider<TDbContext>.GetExecutionStrategyFromDbContext(DbContext dbContext)
+		protected override IExecutionStrategy GetExecutionStrategyFromDbContext(DbContext dbContext)
 		{
 			return this.CreateDummyExecutionStrategy(dbContext);
 		}
 
-		TResult IDbContextProvider<TDbContext>.ExecuteInDbContextScope<TState, TResult>(
+		protected override TResult ExecuteInDbContextScope<TState, TResult>(
 			AmbientScopeOption scopeOption,
 			TState state, Func<IExecutionScope<TState>, TResult> task)
 		{
-			return this.ExecuteInDbContextScopeAsync(scopeOption, state, default, ExecuteSynchronously, async: false, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false)
+			return (this as IDbContextProvider<TContext>)
+				.ExecuteInDbContextScopeAsync(scopeOption, state, default, ExecuteSynchronously, async: false, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false)
 				.AssumeSynchronous();
 
 			// Local function that executes the given task and returns a completed task
@@ -120,11 +122,12 @@ namespace Architect.EntityFramework.DbContextManagement
 			}
 		}
 
-		Task<TResult> IDbContextProvider<TDbContext>.ExecuteInDbContextScopeAsync<TState, TResult>(
+		protected override Task<TResult> ExecuteInDbContextScopeAsync<TState, TResult>(
 			AmbientScopeOption scopeOption,
 			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{
-			return this.ExecuteInDbContextScopeAsync(scopeOption, state, cancellationToken, task, async: true, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false);
+			return (this as IDbContextProvider<TContext>)
+				.ExecuteInDbContextScopeAsync(scopeOption, state, cancellationToken, task, async: true, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false);
 		}
 	}
 
@@ -133,7 +136,7 @@ namespace Architect.EntityFramework.DbContextManagement
 	/// A mock implementation to provide <see cref="DbContextScope"/> instances.
 	/// </para>
 	/// </summary>
-	public class MockDbContextProvider<TContext, TDbContext> : MockDbContextProvider<TDbContext>, IDbContextProvider<TContext>
+	public class MockDbContextProvider<TDbContext> : MockDbContextProvider<TDbContext, TDbContext>
 		where TDbContext : DbContext
 	{
 		/// <summary>
@@ -178,30 +181,6 @@ namespace Architect.EntityFramework.DbContextManagement
 		public MockDbContextProvider(TDbContext instance, DbContextScopeOptions? options = null)
 			: base(instance, options)
 		{
-		}
-
-		/// <summary>
-		/// This implementation is required to mock the behavior when the compile-time type is <see cref="IDbContextProvider{TContext}"/> of <typeparamref name="TContext"/>
-		/// as opposed to of <typeparamref name="TDbContext"/>.
-		/// It will redirect to the implementation in <see cref="MockDbContextProvider{TDbContext}"/>.
-		/// </summary>
-		TResult IDbContextProvider<TContext>.ExecuteInDbContextScope<TState, TResult>(
-			AmbientScopeOption scopeOption,
-			TState state, Func<IExecutionScope<TState>, TResult> task)
-		{
-			return ((IDbContextProvider<TDbContext>)this).ExecuteInDbContextScope(scopeOption, state, task);
-		}
-
-		/// <summary>
-		/// This implementation is required to mock the behavior when the compile-time type is <see cref="IDbContextProvider{TContext}"/> of <typeparamref name="TContext"/>
-		/// as opposed to of <typeparamref name="TDbContext"/>.
-		/// It will redirect to the implementation in <see cref="MockDbContextProvider{TDbContext}"/>.
-		/// </summary>
-		Task<TResult> IDbContextProvider<TContext>.ExecuteInDbContextScopeAsync<TState, TResult>(
-			AmbientScopeOption scopeOption,
-			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
-		{
-			return ((IDbContextProvider<TDbContext>)this).ExecuteInDbContextScopeAsync(scopeOption, state, cancellationToken, task);
 		}
 	}
 }

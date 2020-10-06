@@ -12,6 +12,8 @@ namespace Architect.EntityFramework.DbContextManagement
 {
 	public partial interface IDbContextProvider<TContext>
 	{
+		// #TODO: Perhaps we should abstract all this away in a class, so that we can use virtual methods instead of all this trouble
+
 		public DbContextScopeOptions Options => DbContextScopeOptions.Default;
 
 		internal IExecutionStrategy CreateExecutionStrategy(DbContext dbContext)

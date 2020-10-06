@@ -14,12 +14,12 @@ namespace EntityFramework.DbContextManagement.Example.Example
 	internal sealed class OrderApplicationService : IAsyncDisposable
 	{
 		//private IServiceProvider ServiceProvider { get; }
-		private IDbContextProvider<ExampleDbContext> DbContextProvider { get; }
+		private IDbContextProvider<ExampleContext> DbContextProvider { get; }
 		private OrderRepo OrderRepo { get; }
 
 		//private DbContextScope<ExampleDbContext> Scope { get; }
 
-		public OrderApplicationService(/*IServiceProvider serviceProvider, */IDbContextProvider<ExampleDbContext> dbContextProvider, OrderRepo orderRepo)
+		public OrderApplicationService(/*IServiceProvider serviceProvider, */IDbContextProvider<ExampleContext> dbContextProvider, OrderRepo orderRepo)
 		{
 			//this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 			this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));
@@ -67,10 +67,7 @@ namespace EntityFramework.DbContextManagement.Example.Example
 		public async Task AddTwoOrdersAndRetrieveThem()
 		{
 			//IDbContextProvider<ExampleContext> prov = new MockDbContextProvider<ExampleContext, ExampleDbContext>(
-			//	new DbContextScopeOptionsBuilder(){ ExecutionStrategyOptions = ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure }.Build())//() => this.ServiceProvider.GetRequiredService<IDbContextFactory<ExampleDbContext>>().CreateDbContext());
-			//{
-			//	ScopedExecutionThrowsConcurrencyException = true,
-			//};
+			//	new DbContextScopeOptionsBuilder() { ExecutionStrategyOptions = ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure }.Build());//() => this.ServiceProvider.GetRequiredService<IDbContextFactory<ExampleDbContext>>().CreateDbContext());
 
 			////var appServ = new OrderApplicationService(this.ServiceProvider, prov, this.OrderRepo));
 

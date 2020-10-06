@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.Providers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.EntityFramework.DbContextManagement
@@ -19,44 +17,35 @@ namespace Architect.EntityFramework.DbContextManagement
 	/// By executing all of the work before throwing, the most mistakes are detected (such as an auto-increment ID already being assigned when the next attempt begins).
 	/// </para>
 	/// </summary>
-	internal sealed class ConcurrencyConflictDbContextProvider<TDbContext> : IDbContextProvider<TDbContext>
+	public class ConcurrencyConflictDbContextProvider<TContext, TDbContext> : OverridingDbContextProvider<TContext, TDbContext>
 		where TDbContext : DbContext
 	{
 		private object? LastSeenUnitOfWork { get; set; }
 
-		public DbContextScopeOptions Options => this.WrappedProvider.Options;
+		public override DbContextScopeOptions Options => this.WrappedProvider.Options;
 
-		private IDbContextProvider<TDbContext> WrappedProvider { get; }
+		private IDbContextProvider<TContext> WrappedProvider { get; }
 
 		private bool AfterCommit { get; }
 
 		/// <param name="afterCommit">If true, any ongoing transaction is committed before the exception occurs, simulating an exception on commit where the commit has actually succeeded.</param>
-		internal ConcurrencyConflictDbContextProvider(IInternalDbContextProvider<TDbContext> internalDbContextProvider, bool afterCommit = false)
-		{
-			this.WrappedProvider = internalDbContextProvider ?? throw new ArgumentNullException(nameof(internalDbContextProvider));
-			this.AfterCommit = afterCommit;
-		}
-
-		/// <param name="afterCommit">If true, any ongoing transaction is committed before the exception occurs, simulating an exception on commit where the commit has actually succeeded.</param>
-		public ConcurrencyConflictDbContextProvider(IDbContextProvider<TDbContext> wrappedProvider, bool afterCommit = false)
+		public ConcurrencyConflictDbContextProvider(IDbContextProvider<TContext> wrappedProvider, bool afterCommit = false)
 		{
 			this.WrappedProvider = wrappedProvider ?? throw new ArgumentNullException(nameof(wrappedProvider));
 			this.AfterCommit = afterCommit;
 		}
 
-		public DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
+		public override DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
 		{
 			return this.WrappedProvider.CreateDbContextScope(scopeOption);
 		}
 
-		internal IExecutionStrategy CreateExecutionStrategy(DbContext dbContext)
+		protected override IExecutionStrategy GetExecutionStrategyFromDbContext(DbContext dbContext)
 		{
-			return this.WrappedProvider.CreateExecutionStrategy(dbContext);
+			throw new NotSupportedException("This code should not be reached, since we delegate to the wrapped instance at a higher level.");
 		}
 
-		TResult IDbContextProvider<TDbContext>.ExecuteInDbContextScope<TState, TResult>(
-			AmbientScopeOption scopeOption,
-			TState state, Func<IExecutionScope<TState>, TResult> task)
+		protected override TResult ExecuteInDbContextScope<TState, TResult>(AmbientScopeOption scopeOption, TState state, Func<IExecutionScope<TState>, TResult> task)
 		{
 			return this.WrappedProvider.ExecuteInDbContextScope(scopeOption, state, scope =>
 			{
@@ -67,9 +56,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			});
 		}
 
-		Task<TResult> IDbContextProvider<TDbContext>.ExecuteInDbContextScopeAsync<TState, TResult>(
-			AmbientScopeOption scopeOption,
-			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
+		protected override Task<TResult> ExecuteInDbContextScopeAsync<TState, TResult>(AmbientScopeOption scopeOption, TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{
 			return this.WrappedProvider.ExecuteInDbContextScopeAsync(scopeOption, state, cancellationToken, async (scope, ct) =>
 			{
@@ -101,58 +88,5 @@ namespace Architect.EntityFramework.DbContextManagement
 				throw new DbUpdateConcurrencyException("This is a simulated optimistic concurrency exception.");
 			}
 		}
-	}
-
-	// #TODO: Clean up, put somewhere else?
-	public static class ConcurrencyConflictDbContextProviderExtensions
-	{
-		/// <summary>
-		/// <para>
-		/// Registers an <see cref="IDbContextProvider{TContext}"/> implementation that wraps the original one,
-		/// throwing a <see cref="DbUpdateConcurrencyException"/> on the first attempt, at the end of the executed task.
-		/// </para>
-		/// <para>
-		/// By executing all of the work before throwing, the most mistakes are detected (such as an auto-increment ID already being assigned when the next attempt begins).
-		/// </para>
-		/// </summary>
-		/// <param name="afterCommit">If true, any ongoing transaction is committed before the exception occurs, simulating an exception on commit where the commit has actually succeeded.</param>
-		public static IServiceCollection AddConcurrencyConflictDbContextProvider<TDbContext>(this IServiceCollection services, bool afterCommit = false)
-			where TDbContext : DbContext
-		{
-			var options = new DbContextScopeExtensions.Options<TDbContext>(services);
-
-			var previousRegistration = services.LastOrDefault(descriptor => descriptor.ServiceType == typeof(IDbContextProvider<TDbContext>));
-			if (previousRegistration is null) throw new InvalidOperationException($"No {nameof(IDbContextProvider<TDbContext>)} was registered that we could wrap.");
-			var implementationFactory = previousRegistration.ImplementationFactory ??
-				(previousRegistration.ImplementationInstance != null
-					? (Func<IServiceProvider, object>)(_ => previousRegistration.ImplementationInstance)
-					: (Func<IServiceProvider, object>)(serviceProvider => ActivatorUtilities.CreateInstance(serviceProvider, previousRegistration.ImplementationType!)));
-
-			services.AddTransient(CreateInstance); // Transient because of execution count
-			return services;
-
-			IDbContextProvider<TDbContext> CreateInstance(IServiceProvider serviceProvider)
-			{
-				var wrappedProvider = (IDbContextProvider<TDbContext>)implementationFactory(serviceProvider) ??
-					throw new Exception($"Implementation factory produced a null {nameof(IDbContextProvider<TDbContext>)} instance.");
-				var instance = new ConcurrencyConflictDbContextProvider<TDbContext>(wrappedProvider, afterCommit);
-				return instance;
-			}
-		}
-
-		// #TODO
-		//public static IServiceCollection AddConcurrencyConflictDbContextProvider<TDbContextRepresentation, TDbContext>(IServiceCollection services)
-		//	where TDbContext : DbContext
-		//{
-		//	services.AddSingleton(CreateInstance);
-		//	return services;
-
-		//	IDbContextProvider<TDbContext> CreateInstance(IServiceProvider serviceProvider)
-		//	{
-		//		var wrappedProvider = serviceProvider.GetRequiredService<IInternalDbContextProvider<TDbContext>>();
-		//		var instance = new ConcurrencyConflictDbContextProvider<TDbContext>(wrappedProvider);
-		//		return instance;
-		//	}
-		//}
 	}
 }
