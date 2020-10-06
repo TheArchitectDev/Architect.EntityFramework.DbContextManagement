@@ -208,9 +208,9 @@ But we can get more benefits. Scoped execution's format lends itself perfectly t
 	.ExecutionStrategyOptions(ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure)
 ```
 
-Furthermore, when this option is used, retries (regardless of their reason) can be tested with [integration tests](#integration-testing-the-orchestrating-layer). By wrapping the `IDbContextProvider<T>` in an `ConcurrencyConflictDbContextProvider<T>`, a `DbUpdateConcurrencyException` except is thrown at the _end_ of the outermost task, and only on the first attempt. With `RetryOnOptimisticConcurrencyFailure` enabled, we can test that the result is the same as when no concurrency exceptions were thrown.
+Furthermore, when this option is used, retries (regardless of their reason) can be tested with [integration tests](#integration-testing-the-orchestrating-layer). By wrapping the `IDbContextProvider<T>` in a `ConcurrencyConflictDbContextProvider<T>`, a `DbUpdateConcurrencyException` except is thrown at the _end_ of the outermost task, and only on the first attempt. With `RetryOnOptimisticConcurrencyFailure` enabled, we can test that the result is the same as when no concurrency exceptions were thrown.
 
-For full integration tests that get their dependencies from an `IServiceProvider`, the `IDbContextProvider<T>` can be wrapped in a `ConcurrencyConflictDbContextProvider<T>` through `IServiceCollection.AddConcurrencyConflictDbContextProvider`.
+For full integration tests that get their dependencies from an `IServiceProvider`, wrapping the `IDbContextProvider<T>` in a `ConcurrencyConflictDbContextProvider<T>` is achieved through `IServiceCollection.AddConcurrencyConflictDbContextProvider`.
 
 #### DefaultScopeOption
 
@@ -222,9 +222,157 @@ For full integration tests that get their dependencies from an `IServiceProvider
 
 ### Testing the Data Access Layer
 
+When testing the layer that actually uses the DbContext, we will have a dependency on `IDbContextAccessor`. The implementation may use that dependency to try to obtain the DbContext.
+
+The dependency is easily fulfilled and controlled with a custom implementation:
+
+```cs
+var dbContextAccessor = FixedDbContextAccessor.Create(myDbContext);
+var repo = new MyRepo(dbContextAccessor);
+```
+
+If a container is used for the tests, then the dependency can be registered instead:
+
+```cs
+var dbContextAccessor = FixedDbContextAccessor.Create(myDbContext);
+hostBuilder.ConfigureServices(services =>
+	services.AddSingleton<IDbContextAccessor>(dbContextAccessor));
+```
+
 ### Unit Testing the Orchestrating Layer
 
+When we write unit tests on the orchestrating layer, the data access code will be mocked out. As such, `IDbContextAccessor` will not be needed. However, the orchestrating layer will still have a dependency on `IDbContextProvider`. Moreover, if scoped execution is used, the flow of execution should resemble the production scenario.
+
+The package provides a `MockDbContextProvider`, which makes it easy to satisfy the dependency while still providing the original flow of execution.
+
+If we do not intend to use an actual DbContext, we can instantiate the mock provider like this:
+
+```cs
+var dbContextProvider = new MockDbContextProvider<MyDbContext>();
+var applicationService = new ApplicationService(dbContextProvider, myRepo);
+```
+
+If we _do_ have a DbContext [factory], we can do this:
+
+```cs
+var dbContextProvider = new MockDbContextProvider<MyDbContext>(myDbContextOrDbContextFactory);
+var applicationService = new ApplicationService(dbContextProvider, myRepo);
+```
+
 ### Integration Testing the Orchestrating Layer
+
+For integration tests on the orchestrating layer, if we set things up correctly, there is nothing to do except register an in-memory database provider for Entity Framework. We recommend SQLite, as it can be used to integration test most scenarios in a very realistic way.
+
+Below is an example of how to set up an integration test with Entity Framework. Note that the example works well regardless of whether this package is used.
+
+It helps to remember that xUnit creates a separate instance of the test class for each test method it performs.
+
+```cs
+/// <summary>
+/// Integration tests on the OrderApplicationService.
+/// </summary>
+public class OrderApplicationServiceTests : IDisposable
+{
+	/// <summary>
+	/// When SQLite disconnects, the in-memory database is deleted.
+	/// A fixed connection per test ensures that we can perform setup and assertions.
+	/// </summary>
+	private DbConnection Connection { get; } = new SqliteConnection("Filename=:memory:");
+
+	/// <summary>
+	/// Used to run a test method as part of an application, with a DI container.
+	/// </summary>
+	private HostBuilder HostBuilder { get; } = new HostBuilder();
+
+	/// <summary>
+	/// Lazily resolved, so that test methods can modify the container last-minute.
+	/// </summary>
+	private IHost Host => this._host ??= this.CreateHost();
+	private IHost? _host;
+
+	/// <summary>
+	/// The subject under test.
+	/// </summary>
+	private OrderShippingApplicationService ApplicationService =>
+		this.Host.Services.GetRequiredService<OrderShippingApplicationService>();
+
+	/// <summary>
+	/// An instance of the DbContext, which many tests use for setup or assertions.
+	/// Although a different instance is provided than the one used in the subject under test,
+	/// the fixed DbConnection provides the same underlying data store.
+	/// </summary>
+	private ReferenceDbContext DbContext => this._dbContext ??=
+		this.Host.Services.GetRequiredService<IDbContextFactory<ReferenceDbContext>>().CreateDbContext();
+	private ReferenceDbContext? _dbContext;
+
+	/// <summary>
+	/// Test method setup.
+	/// </summary>
+	public OrderShippingApplicationServiceTests()
+	{
+		this.Connection.Open();
+
+		// For some reason Entity Framework uses "first registration wins" instead of "last registration wins"
+		// So configure the test DbContext FIRST
+		this.HostBuilder.ConfigureServices(services =>
+			services.AddPooledDbContextFactory<ReferenceDbContext>(
+				context => context.UseSqlite(this.Connection)));
+
+		// Call the method that registers the application's dependencies
+		// It is recommended to represent the application in a .NET Library Project
+		this.HostBuilder.ConfigureServices(services => services.AddReferenceApplication());
+	}
+
+	/// <summary>
+	/// Test method teardown.
+	/// </summary>
+	public void Dispose()
+	{
+		this._dbContext?.Dispose();
+		this.Host.Dispose();
+		this.Connection.Dispose();
+	}
+
+	private IHost CreateHost()
+	{
+		var host = this.HostBuilder.Build();
+		host.Services.GetRequiredService<IDbContextFactory<ReferenceDbContext>>().CreateDbContext().Database.EnsureCreated();
+		return host;
+	}
+
+	/// <summary>
+	/// An example test method.
+	/// </summary>
+	[Fact]
+	public async Task GetOrder_WithNonexistentOrder_ShouldThrow()
+	{
+		await Assert.ThrowsAsync<KeyNotFoundException>(() => this.ApplicationService.GetOrder(orderId: 999));
+	}
+}
+```
+
+Additionally, when `ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure` is used, the retry behavior can be easily tested with integration tests.
+
+```cs
+// Run once with false and once with true
+[Theory]
+[InlineData(false)]
+[InlineData(true)]
+public async Task GetOrderShippingStatus_WithExistingOrder_ShouldReturnExpectedResult(bool withConcurrencyException)
+{
+	// If withConcurrencyException=true,
+	// the first invocation of ExecuteInDbContextScopeAsync()
+	// will throw a DbUpdateConcurrencyException just before committing, and then retry
+	if (withConcurrencyException)
+		this.HostBuilder.ConfigureServices(services => services
+			.AddConcurrencyConflictDbContextProvider<MyDbContext>());
+
+	var result = await this.ApplicationService.GetOrderShippingStatus(orderId: 1);
+
+	// With or without retry, the result should be as expected
+	// Snip: assertions
+}
+```
 
 ### Manual Use
 
@@ -264,6 +412,22 @@ public class MyApplicationService
 
 With the manual approach, the application code is responsible for transactions, execution strategies, etc.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// #TODO: Remove?
 
 
 
