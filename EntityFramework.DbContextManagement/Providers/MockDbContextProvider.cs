@@ -20,17 +20,6 @@ namespace Architect.EntityFramework.DbContextManagement
 	public class MockDbContextProvider<TDbContext> : IDbContextProvider<TDbContext>
 		where TDbContext : DbContext
 	{
-		/// <summary>
-		/// <para>
-		/// If set to true, when a variant of <see cref="IDbContextProvider{TContext}.ExecuteInDbContextScope{TState, TResult}"/> is invoked,
-		/// a <see cref="DbUpdateConcurrencyException"/> is thrown on the first attempt.
-		/// </para>
-		/// <para>
-		/// This can be used to test the result of optimistic concurrency conflicts, particularly when <see cref="ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure"/> is enabled.
-		/// </para>
-		/// </summary>
-		public bool ScopedExecutionThrowsConcurrencyException { get; set; }
-
 		public DbContextScopeOptions Options { get; }
 
 		private DbContextFactory<TDbContext> DbContextFactory { get; }
@@ -108,7 +97,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		protected IExecutionStrategy CreateDummyExecutionStrategy(DbContext dbContext)
 		{
 			// Since we provide mock behavior, do not proceed into the DbContext's own strategy
-			return new DummyExecutionStrategy(dbContext, throwsConcurrencyExceptionOnNextExecution: this.ScopedExecutionThrowsConcurrencyException);
+			return new DummyExecutionStrategy(dbContext);
 		}
 
 		IExecutionStrategy IDbContextProvider<TDbContext>.GetExecutionStrategyFromDbContext(DbContext dbContext)
