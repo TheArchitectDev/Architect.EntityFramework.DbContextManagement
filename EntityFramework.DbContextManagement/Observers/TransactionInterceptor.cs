@@ -12,7 +12,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 		public TransactionInterceptor(Action willStartTransaction)
 		{
-			System.Diagnostics.Debug.Assert(WillStartTransaction != null);
+			System.Diagnostics.Debug.Assert(willStartTransaction != null);
 
 			this.WillStartTransaction = willStartTransaction;
 		}
