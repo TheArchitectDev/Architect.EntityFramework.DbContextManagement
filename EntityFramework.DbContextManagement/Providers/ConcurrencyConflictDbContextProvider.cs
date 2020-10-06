@@ -28,14 +28,20 @@ namespace Architect.EntityFramework.DbContextManagement
 
 		private IDbContextProvider<TDbContext> WrappedProvider { get; }
 
-		internal ConcurrencyConflictDbContextProvider(IInternalDbContextProvider<TDbContext> internalDbContextProvider)
+		private bool AfterCommit { get; }
+
+		/// <param name="afterCommit">If true, any ongoing transaction is committed before the exception occurs, simulating an exception on commit where the commit has actually succeeded.</param>
+		internal ConcurrencyConflictDbContextProvider(IInternalDbContextProvider<TDbContext> internalDbContextProvider, bool afterCommit = false)
 		{
 			this.WrappedProvider = internalDbContextProvider ?? throw new ArgumentNullException(nameof(internalDbContextProvider));
+			this.AfterCommit = afterCommit;
 		}
 
-		public ConcurrencyConflictDbContextProvider(IDbContextProvider<TDbContext> wrappedProvider)
+		/// <param name="afterCommit">If true, any ongoing transaction is committed before the exception occurs, simulating an exception on commit where the commit has actually succeeded.</param>
+		public ConcurrencyConflictDbContextProvider(IDbContextProvider<TDbContext> wrappedProvider, bool afterCommit = false)
 		{
 			this.WrappedProvider = wrappedProvider ?? throw new ArgumentNullException(nameof(wrappedProvider));
+			this.AfterCommit = afterCommit;
 		}
 
 		public DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
@@ -88,7 +94,12 @@ namespace Architect.EntityFramework.DbContextManagement
 		private void ThrowConcurrencyException(bool shouldThrow)
 		{
 			if (shouldThrow)
+			{
+				if (this.AfterCommit && DbContextScope<TDbContext>.Current.DbContext.Database.CurrentTransaction != null)
+					DbContextScope<TDbContext>.Current.DbContext.Database.CommitTransaction();
+
 				throw new DbUpdateConcurrencyException("This is a simulated optimistic concurrency exception.");
+			}
 		}
 	}
 
@@ -104,7 +115,8 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// By executing all of the work before throwing, the most mistakes are detected (such as an auto-increment ID already being assigned when the next attempt begins).
 		/// </para>
 		/// </summary>
-		public static IServiceCollection AddConcurrencyConflictDbContextProvider<TDbContext>(this IServiceCollection services)
+		/// <param name="afterCommit">If true, any ongoing transaction is committed before the exception occurs, simulating an exception on commit where the commit has actually succeeded.</param>
+		public static IServiceCollection AddConcurrencyConflictDbContextProvider<TDbContext>(this IServiceCollection services, bool afterCommit = false)
 			where TDbContext : DbContext
 		{
 			var options = new DbContextScopeExtensions.Options<TDbContext>(services);
@@ -123,7 +135,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			{
 				var wrappedProvider = (IDbContextProvider<TDbContext>)implementationFactory(serviceProvider) ??
 					throw new Exception($"Implementation factory produced a null {nameof(IDbContextProvider<TDbContext>)} instance.");
-				var instance = new ConcurrencyConflictDbContextProvider<TDbContext>(wrappedProvider);
+				var instance = new ConcurrencyConflictDbContextProvider<TDbContext>(wrappedProvider, afterCommit);
 				return instance;
 			}
 		}
