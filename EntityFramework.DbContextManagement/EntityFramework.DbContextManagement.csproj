@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AssemblyName>Architect.EntityFramework.DbContextManagement</AssemblyName>
+    <RootNamespace>Architect.EntityFramework.DbContextManagement</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
+    <!-- NoWarn: 1591=MissingXmlComments -->
+    <NoWarn>1573;1591</NoWarn>
+    <LangVersion>latest</LangVersion>
+    <Nullable>Enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>1.0.0-preview-8.0.2</Version>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <Description>
+    </Description>
+    <Copyright>The Architect</Copyright>
+    <Company>The Architect</Company>
+    <Authors>TheArchitectDev, Timovzl</Authors>
+    <RepositoryUrl>https://github.com/TheArchitectDev/Architect.AmbientContexts</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageTags>DbContext, DbContextScope, AmbientDbContext, EntityFramework, Entity, Framework, EF, Core, EfCore, AmbientContext, AmbientScope, ambient, context, scope, IoC, inversion, control, transaction, UnitOfWork, unit, work</PackageTags>
+    <PackageReleaseNotes>
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Architect.AmbientContexts" Version="1.0.0-RC6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.0-*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.0-*" />
+  </ItemGroup>
+
+</Project>

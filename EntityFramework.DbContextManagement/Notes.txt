@@ -1,0 +1,15 @@
+﻿#TODO: Update
+
+Start a transaction, if necessary, when:
+- Saving changes.
+- Performing a query other than regular LINQ-based (since it might make modifications).
+
+Detect saving changes:
+- SaveChangesInterceptor.SavingChange[Async]
+
+Detect performing a query other than regular LINQ-based:
+- Not between "Microsoft.EntityFrameworkCore.Update.SaveChangesStarting" and "Microsoft.EntityFrameworkCore.Update.SaveChangesCompleted".
+- Not between "Microsoft.EntityFrameworkCore.Query.QueryExecutionPlanned" and "Microsoft.EntityFrameworkCore.Database.Command.DataReaderDisposing"
+  - Test with EF 5's new optional multi-query-Include() (might use multiple readers - but how many QueryExecutionPlanned??)
+- CommandCreating
+  - Confirm that the command indeed enlists in the transaction (otherwise will have to start a transaction always, meaning separate Read and ReadWrite...)
