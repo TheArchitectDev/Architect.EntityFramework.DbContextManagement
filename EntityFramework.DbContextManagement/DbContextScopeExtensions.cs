@@ -174,5 +174,26 @@ namespace Architect.EntityFramework.DbContextManagement
 			options.OptionsBuilder.DefaultScopeOption = defaultScopeOption;
 			return options;
 		}
+
+		/// <summary>
+		/// <para>
+		/// In the extremely rare case where an exception occurs while a transaction is being committed, the application has no way of knowing whether the database has accepted or rejected the commit.
+		/// The connection may have been broken while the database was already performing the commit.
+		/// </para>
+		/// <para>
+		/// When a retrying execution strategy is used, by default Entity Framework will retry <strong>even</strong> for a failure on commit.
+		/// Retrying an operation that may have already succeeded could have unforeseen consequences, such as performing an insertion or update twice.
+		/// </para>
+		/// <para>
+		/// If the current option is set to <strong>true</strong> (default), scoped execution will avoid retries caused by commit failures.
+		/// To do so, it wraps the responsible exception in a generic <see cref="Exception"/>.
+		/// </para>
+		/// </summary>
+		public static Options<TDbContext> AvoidFailureOnCommitRetries<TDbContext>(this Options<TDbContext> options, bool avoidFailureOnCommitRetries)
+			where TDbContext : DbContext
+		{
+			options.OptionsBuilder.AvoidFailureOnCommitRetries = avoidFailureOnCommitRetries;
+			return options;
+		}
 	}
 }

@@ -6,12 +6,14 @@ namespace Architect.EntityFramework.DbContextManagement
 	{
 		public ExecutionStrategyOptions ExecutionStrategyOptions { get; set; } = ExecutionStrategyOptions.None;
 		public AmbientScopeOption DefaultScopeOption { get; set; } = AmbientScopeOption.JoinExisting;
+		public bool AvoidFailureOnCommitRetries { get; set; } = true;
 
 		public DbContextScopeOptions Build()
 		{
 			var options = new DbContextScopeOptions(
 				this.ExecutionStrategyOptions,
-				this.DefaultScopeOption);
+				this.DefaultScopeOption,
+				this.AvoidFailureOnCommitRetries);
 
 			return options;
 		}

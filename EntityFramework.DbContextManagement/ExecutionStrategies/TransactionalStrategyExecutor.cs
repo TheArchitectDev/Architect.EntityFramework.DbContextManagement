@@ -132,7 +132,16 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 					// If we were completed, commit the ongoing transaction, if any
 					if (isExecutionScopeCompleted)
-						await unitOfWork.TryCommitTransactionAsync(async, cancellationToken);
+					{
+						try
+						{
+							await unitOfWork.TryCommitTransactionAsync(async, cancellationToken);
+						}
+						catch (Exception e) when (provider.Options.AvoidFailureOnCommitRetries) // #TODO: Test
+						{
+							throw new Exception("The operation failed on commit. Since it is possible that the commit succeeded, potential retries were avoided.", e);
+						}
+					}
 
 					return result;
 				}
