@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
@@ -8,13 +7,11 @@ using System.Transactions;
 using Architect.EntityFramework.DbContextManagement.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Architect.EntityFramework.DbContextManagement.Observers
 {
-	internal sealed class DbContextObserver : IObserver<KeyValuePair<string, object?>>, IDisposable
+	internal sealed class DbContextObserver : IDisposable
 	{
 		public event Action? WillStartTransaction;
 		public event Action? WillCreateCommand;
@@ -37,26 +34,13 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 		private DbContext DbContext { get; }
 
-		/// <summary>
-		/// A subscription token to the <see cref="DbContext"/>'s <see cref="DiagnosticListener"/>.
-		/// </summary>
-		private IDisposable? SubscriptionToken { get; set; }
 		private InterceptorSwapper<ISaveChangesInterceptor> SaveInterceptorSwapper { get; }
 		private InterceptorSwapper<IDbCommandInterceptor> CommandInterceptorSwapper { get; }
+		private InterceptorSwapper<IDbTransactionInterceptor> TransactionInterceptorSwapper { get; }
 
 		public DbContextObserver(DbContext dbContext)
 		{
 			this.DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-
-			// Add a DiagnosticListener
-			{
-				var diagnosticSource = dbContext.GetService<DiagnosticSource>() ?? ThrowHelper.ThrowIncompatibleWithEfVersion<DiagnosticSource>(
-					new Exception($"The DbContext ({dbContext.GetType().Name}) no longer provides a {nameof(DiagnosticSource)}."));
-				var diagnosticListener = diagnosticSource as DiagnosticListener ?? ThrowHelper.ThrowIncompatibleWithEfVersion<DiagnosticListener>(
-					new Exception($"The DbContext ({dbContext.GetType().Name}) now provides a {nameof(DiagnosticSource)} that is not a {nameof(DiagnosticListener)}."));
-
-				this.SubscriptionToken = diagnosticListener.Subscribe(this, this.IsDiagnosticListenerEnabledForEvent);
-			}
 
 			// Add interceptors
 			{
@@ -66,12 +50,15 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 						new SaveInterceptor(this.InterceptorWillSaveChanges, this.InterceptorDidSaveChanges));
 					this.CommandInterceptorSwapper = new InterceptorSwapper<IDbCommandInterceptor>(this.DbContext,
 						new CommandInterceptor(this.InterceptorWillCreateCommand, this.InterceptorMightPerformCustomQuery));
+					this.TransactionInterceptorSwapper = new InterceptorSwapper<IDbTransactionInterceptor>(this.DbContext,
+						new TransactionInterceptor(this.InterceptorWillStartTransaction));
 				}
 				catch (Exception e)
 				{
 					// Make sure to dispose what was attached
 					this.SaveInterceptorSwapper?.Dispose();
 					this.CommandInterceptorSwapper?.Dispose();
+					this.TransactionInterceptorSwapper?.Dispose();
 
 					if (e is IncompatibleVersionException)
 						throw;
@@ -89,8 +76,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 			this.SaveInterceptorSwapper.Dispose();
 			this.CommandInterceptorSwapper.Dispose();
-
-			this.SubscriptionToken?.Dispose();
+			this.TransactionInterceptorSwapper.Dispose();
 		}
 
 		/// <summary>
@@ -173,44 +159,6 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 		private void InterceptorWillCreateCommand()
 		{
 			this.WillCreateCommand?.Invoke();
-		}
-
-		/// <summary>
-		/// We always return false, but we use this method to intercept certain events.
-		/// </summary>
-		private bool IsDiagnosticListenerEnabledForEvent(string eventName, object? a, object? b)
-		{
-			switch (eventName)
-			{
-				// #TODO: Use DbTransactionInterceptor
-				// Could use a DbTransactionInterceptor instead, in the future
-				case "Microsoft.EntityFrameworkCore.Database.Transaction.TransactionStarting":
-					this.InterceptorWillStartTransaction();
-					break;
-			}
-
-			return false;
-		}
-
-		/// <summary>
-		/// Required by IObserver.
-		/// </summary>
-		public void OnNext(KeyValuePair<string, object?> value)
-		{
-		}
-
-		/// <summary>
-		/// Required by IObserver.
-		/// </summary>
-		public void OnCompleted()
-		{
-		}
-
-		/// <summary>
-		/// Required by IObserver.
-		/// </summary>
-		public void OnError(Exception error)
-		{
 		}
 	}
 }
