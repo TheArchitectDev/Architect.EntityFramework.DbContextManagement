@@ -19,6 +19,11 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 	/// </summary>
 	internal abstract class UnitOfWork
 	{
+		/// <summary>
+		/// Lazily instantiated.
+		/// </summary>
+		public abstract DbContextObserver DbContextObserver { get; }
+
 		internal System.Data.IsolationLevel? IsolationLevel
 		{
 			get => this._isolationLevel;
@@ -76,24 +81,6 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		/// If the current <see cref="UnitOfWork"/> has been invalidated by a variant of <see cref="TryRollBackTransactionAndInvalidate"/>, this method makes it valid and usable again.
 		/// </summary>
 		internal abstract void UndoInvalidation();
-
-		/// <summary>
-		/// <para>
-		/// Adds the following behavior to the current <see cref="DbContext"/>:
-		/// If any non-save query is attempted while there are unsaved changes, <see cref="DbContext.SaveChanges()"/> is invoked first.
-		/// </para>
-		/// <para>
-		/// The saving is, unfortunately, strictly synchronous.
-		/// </para>
-		/// </summary>
-		internal abstract void TryAddAutoFlushBehavior();
-
-		/// <summary>
-		/// <para>
-		/// Removes the behavior resulting from <see cref="TryAddAutoFlushBehavior"/>.
-		/// </para>
-		/// </summary>
-		internal abstract void TryRemoveAutoFlushBehavior();
 	}
 
 	/// <summary>
@@ -118,19 +105,16 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		/// <summary>
 		/// Lazily instantiated.
 		/// </summary>
-		public DbContextObserver DbContextObserver => this._dbContextObserver ??= this.AcquireDbContextObserver();
+		public override DbContextObserver DbContextObserver => this._dbContextObserver ??= this.AcquireDbContextObserver();
 		public DbContextObserver? _dbContextObserver;
 
 		private Func<TDbContext> DbContextFactory { get; }
 
-		private DbContextScopeOptions Options { get; }
-
-		public UnitOfWork(Func<TDbContext> dbContextFactory, DbContextScopeOptions options)
+		public UnitOfWork(Func<TDbContext> dbContextFactory)
 		{
 			this._lock = new UltralightLock<UnitOfWork<TDbContext>>(this, self => ref self._lock);
 
 			this.DbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
-			this.Options = options ?? throw new ArgumentNullException(nameof(options));
 		}
 
 		public void Dispose()
@@ -219,7 +203,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 			if (this._dbContextObserver != null) return this._dbContextObserver;
 
-			var observer = new DbContextObserver(dbContext, this.Options.AutoFlushMode);
+			var observer = new DbContextObserver(dbContext);
 
 			try
 			{

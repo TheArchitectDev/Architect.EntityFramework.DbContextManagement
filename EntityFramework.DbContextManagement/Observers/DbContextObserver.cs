@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Architect.EntityFramework.DbContextManagement.Exceptions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -30,30 +29,13 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 		/// </summary>
 		public Func<bool, CancellationToken, Task>? WillSaveChanges { get; set; }
 
-		// #TODO: Remove
-		/// <summary>
-		/// <para>
-		/// Invoked when a command is being created that does not result from SaveChanges() or SaveChangesAsync(), while there are unsaved changes.
-		/// </para>
-		/// <para>
-		/// The command might cause data to be loaded, and the caller might have expected those changes to be reflected in the database.
-		/// </para>
-		/// </summary>
-		public event Action? WillPerformNonSaveQueryWithUnsavedChanges;
-
-		/// <summary>
-		/// Used to reduce the need for calling <see cref="ChangeTracker.HasChanges"/>.
-		/// </summary>
-		private bool HasChanges { get; set; }
 		/// <summary>
 		/// True while a save command is being executed.
 		/// </summary>
 		private bool IsSaving { get; set; }
 		private bool IsTransactionAborted { get; set; }
 
-		private AutoFlushMode AutoFlushMode { get; }
-
-		private DbContext DbContext { get; set; } = null!;
+		private DbContext DbContext { get; }
 
 		/// <summary>
 		/// A subscription token to the <see cref="DbContext"/>'s <see cref="DiagnosticListener"/>.
@@ -62,19 +44,9 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 		private InterceptorSwapper<ISaveChangesInterceptor> SaveInterceptorSwapper { get; }
 		private InterceptorSwapper<IDbCommandInterceptor> CommandInterceptorSwapper { get; }
 
-		public DbContextObserver(DbContext dbContext, AutoFlushMode autoFlushMode)
+		public DbContextObserver(DbContext dbContext)
 		{
-			Debug.Assert(Enum.IsDefined(typeof(AutoFlushMode), autoFlushMode));
-
 			this.DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-			this.AutoFlushMode = autoFlushMode;
-
-			// Register change trackers
-			if (this.AutoFlushMode >= AutoFlushMode.DetectExplicitChanges)
-			{
-				this.DbContext.ChangeTracker.StateChanged += this.StateDidChange;
-				this.DbContext.ChangeTracker.Tracked += this.DidStartTracking;
-			}
 
 			// Add a DiagnosticListener
 			{
@@ -112,7 +84,6 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 		public void Dispose()
 		{
 			this.WillSaveChanges = null;
-			this.WillPerformNonSaveQueryWithUnsavedChanges = null;
 			this.WillStartTransaction = null;
 			this.WillCreateCommand = null;
 
@@ -120,13 +91,6 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 			this.CommandInterceptorSwapper.Dispose();
 
 			this.SubscriptionToken?.Dispose();
-
-			if (this.DbContext != null)
-			{
-				this.DbContext.ChangeTracker.StateChanged -= this.StateDidChange; // Throws if DbContext is disposed, but disposing it prematurely is developer error
-				this.DbContext.ChangeTracker.Tracked -= this.DidStartTracking; // Throws if DbContext is disposed, but disposing it prematurely is developer error
-				this.DbContext = null!;
-			}
 		}
 
 		/// <summary>
@@ -194,11 +158,10 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 				: this.WillSaveChanges(async, cancellationToken);
 		}
 
-		private void InterceptorDidSaveChanges()
+		private void InterceptorDidSaveChanges(bool success)
 		{
 			Debug.Assert(this.IsSaving);
 
-			this.HasChanges = false;
 			this.IsSaving = false;
 		}
 
@@ -210,70 +173,6 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 		private void InterceptorWillCreateCommand()
 		{
 			this.WillCreateCommand?.Invoke();
-		}
-
-		// #TODO: Remove
-		/*
-		private void InterceptorDidCreateCommand(DbCommand _)
-		{
-			// [Edit: EF seems to assign the correct transaction to the command eventually]
-			//var mayHaveStartedTransaction = false;
-
-			var isLoading = this.IsLoading;
-			this.IsLoading = false;
-
-			// If performing a custom query, report that things are about to be saved (the safest assumption)
-			var isPerformingCustomQuery = !isLoading && !this.IsSaving;
-			if (isPerformingCustomQuery)
-			{
-				// [Edit: EF seems to assign the correct transaction to the command eventually]
-				//mayHaveStartedTransaction = this.UnitOfWork.TryStartTransaction();
-
-				// Inform the listener that changes may be saved
-				this.WillSaveChanges?.Invoke(false, default);
-			}
-
-			// If performing a non-save query while there are changes, report this
-			if (!this.IsSaving)
-			{
-				if (this.HasChanges = this.HasChanges ||
-					(this.AutoFlushMode == AutoFlushMode.DetectExplicitAndImplicitChanges && this.DbContext.ChangeTracker.HasChanges()))
-				{
-					// [Edit: EF seems to assign the correct transaction to the command eventually]
-					//mayHaveStartedTransaction = this.UnitOfWork.TryStartTransaction();
-
-					// Something may be loaded, but there are pending changes
-					this.WillPerformNonSaveQueryWithUnsavedChanges?.Invoke();
-				}
-			}
-
-			// #TODO: Unit test that this is not needed
-			// #TODO: Test with SQL Server that this is not needed either
-			// #TODO: Use WillCreateCommand instead of DidCreateCommand again?
-			// [Edit: EF seems to assign the correct transaction to the command eventually]
-			// If a transaction was started last-minute, ensure that the command enlists in it
-			//if (mayHaveStartedTransaction)
-			//{
-			//	var transaction = this.DbContext.Database.CurrentTransaction.GetDbTransaction();
-			//	if (transaction != null && transaction != command.Transaction)
-			//		command.Transaction = transaction;
-			//}
-		}*/
-
-		private void StateDidChange(object? changeTracker, EntityStateChangedEventArgs args)
-		{
-			// We only care about updates and deletes
-			if (args.NewState != EntityState.Modified && args.NewState != EntityState.Deleted) return;
-
-			this.HasChanges = true;
-		}
-
-		private void DidStartTracking(object? changeTracker, EntityTrackedEventArgs args)
-		{
-			// We only care about newly added things, not query results
-			if (args.FromQuery) return;
-
-			this.HasChanges = true;
 		}
 
 		/// <summary>

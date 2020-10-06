@@ -83,24 +83,13 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 					}
 				}
 
+				_ = unitOfWork.DbContextObserver; // Ensure that the observer is resolved
+
 				var executionStrategy = provider.CreateExecutionStrategy(dbContextScope.DbContext);
 
-				// Add auto-flush behavior
-				if (provider.Options.AutoFlushMode != AutoFlushMode.None)
-					unitOfWork.TryAddAutoFlushBehavior();
-
-				try
-				{
-					return async
-						? await executionStrategy.ExecuteAsync(ExecuteAsync, cancellationToken)
-						: executionStrategy.Execute(() => ExecuteAsync(cancellationToken).AssumeSynchronous());
-				}
-				finally
-				{
-					// Remove auto-flush behavior
-					if (provider.Options.AutoFlushMode != AutoFlushMode.None)
-						unitOfWork.TryRemoveAutoFlushBehavior();
-				}
+				return async
+					? await executionStrategy.ExecuteAsync(ExecuteAsync, cancellationToken)
+					: executionStrategy.Execute(() => ExecuteAsync(cancellationToken).AssumeSynchronous());
 			}
 			finally
 			{

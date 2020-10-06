@@ -23,11 +23,10 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </summary>
 		internal static DbContextScope<TDbContext> Create<TDbContext>(
 			IDbContextFactory<TDbContext> dbContextFactory,
-			DbContextScopeOptions options,
 			AmbientScopeOption scopeOption)
 			where TDbContext : DbContext
 		{
-			return Create(dbContextFactory.CreateDbContext, options, scopeOption);
+			return Create(dbContextFactory.CreateDbContext, scopeOption);
 		}
 
 		/// <summary>
@@ -36,11 +35,10 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </summary>
 		internal static DbContextScope<TDbContext> Create<TDbContext>(
 			Func<TDbContext> dbContextFactory,
-			DbContextScopeOptions options,
 			AmbientScopeOption scopeOption)
 			where TDbContext : DbContext
 		{
-			return new DbContextScope<TDbContext>(dbContextFactory, options, scopeOption);
+			return new DbContextScope<TDbContext>(dbContextFactory, scopeOption);
 		}
 
 		/// <summary>
@@ -140,7 +138,6 @@ namespace Architect.EntityFramework.DbContextManagement
 
 		internal DbContextScope(
 			Func<TDbContext> dbContextFactory,
-			DbContextScopeOptions options,
 			AmbientScopeOption scopeOption)
 			: base(scopeOption)
 		{
@@ -149,7 +146,7 @@ namespace Architect.EntityFramework.DbContextManagement
 
 			try
 			{
-				this.UnitOfWork = this.EffectiveParentScope?.UnitOfWork ?? new UnitOfWork<TDbContext>(dbContextFactory, options);
+				this.UnitOfWork = this.EffectiveParentScope?.UnitOfWork ?? new UnitOfWork<TDbContext>(dbContextFactory);
 			}
 			catch
 			{

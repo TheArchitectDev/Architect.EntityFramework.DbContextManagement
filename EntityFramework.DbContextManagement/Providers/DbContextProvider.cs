@@ -27,7 +27,7 @@ namespace Architect.EntityFramework.DbContextManagement
 
 		public DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
 		{
-			var dbContextScope = DbContextScope.Create(this.DbContextFactory, this.Options, scopeOption ?? this.Options.DefaultScopeOption);
+			var dbContextScope = DbContextScope.Create(this.DbContextFactory, scopeOption ?? this.Options.DefaultScopeOption);
 			return dbContextScope;
 		}
 	}

@@ -38,9 +38,8 @@ namespace EntityFramework.DbContextManagement.Example.Example
 
 			hostBuilder.ConfigureServices(services => services.AddDbContextScope<ExampleContext, ExampleDbContext>(opt => opt
 				//.DbContextFactory(() => new ExampleDbContext(new DbContextOptionsBuilder<ExampleDbContext>().UseSqlite(sqliteConnection).Options))
-				.ExecutionStrategyOptions(ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure)
 				//.DefaultScopeOption(AmbientScopeOption.NoNesting)
-				.AutoFlushMode(AutoFlushMode.DetectExplicitAndImplicitChanges)));
+				.ExecutionStrategyOptions(ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure)));
 
 			hostBuilder.ConfigureServices(services => services.AddConcurrencyConflictDbContextProvider<ExampleDbContext>());
 

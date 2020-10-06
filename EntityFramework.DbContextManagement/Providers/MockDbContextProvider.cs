@@ -101,7 +101,7 @@ namespace Architect.EntityFramework.DbContextManagement
 
 		public virtual DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
 		{
-			var result = DbContextScope.Create(this.DbContextFactory, this.Options, scopeOption ?? this.Options.DefaultScopeOption);
+			var result = DbContextScope.Create(this.DbContextFactory, scopeOption ?? this.Options.DefaultScopeOption);
 			return result;
 		}
 

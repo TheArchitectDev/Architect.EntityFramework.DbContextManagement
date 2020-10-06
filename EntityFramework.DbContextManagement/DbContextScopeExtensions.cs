@@ -158,16 +158,6 @@ namespace Architect.EntityFramework.DbContextManagement
 			return options;
 		}
 
-		public static Options<TDbContext> AutoFlushMode<TDbContext>(this Options<TDbContext> options, AutoFlushMode autoFlushMode)
-			where TDbContext : DbContext
-		{
-			if (!Enum.IsDefined(typeof(AutoFlushMode), autoFlushMode))
-				throw new ArgumentException($"Undefined {nameof(DbContextManagement.AutoFlushMode)}: {autoFlushMode}.");
-
-			options.OptionsBuilder.AutoFlushMode = autoFlushMode;
-			return options;
-		}
-
 		public static Options<TDbContext> ExecutionStrategyOptions<TDbContext>(this Options<TDbContext> options, ExecutionStrategyOptions executionStrategyOptions)
 			where TDbContext : DbContext
 		{

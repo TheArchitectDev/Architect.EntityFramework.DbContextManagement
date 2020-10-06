@@ -66,31 +66,31 @@ namespace EntityFramework.DbContextManagement.Example.Example
 
 		public async Task AddTwoOrdersAndRetrieveThem()
 		{
-			IDbContextProvider<ExampleContext> prov = new MockDbContextProvider<ExampleContext, ExampleDbContext>(
-				new DbContextScopeOptionsBuilder(){ ExecutionStrategyOptions = ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure }.Build())//() => this.ServiceProvider.GetRequiredService<IDbContextFactory<ExampleDbContext>>().CreateDbContext());
-			{
-				ScopedExecutionThrowsConcurrencyException = true,
-			};
+			//IDbContextProvider<ExampleContext> prov = new MockDbContextProvider<ExampleContext, ExampleDbContext>(
+			//	new DbContextScopeOptionsBuilder(){ ExecutionStrategyOptions = ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure }.Build())//() => this.ServiceProvider.GetRequiredService<IDbContextFactory<ExampleDbContext>>().CreateDbContext());
+			//{
+			//	ScopedExecutionThrowsConcurrencyException = true,
+			//};
 
-			//var appServ = new OrderApplicationService(this.ServiceProvider, prov, this.OrderRepo));
+			////var appServ = new OrderApplicationService(this.ServiceProvider, prov, this.OrderRepo));
 
-			try
-			{
-				await prov.ExecuteInDbContextScopeAsync(task: async (executionScope) =>
-				{
-					executionScope.IsolationLevel = System.Data.IsolationLevel.ReadCommitted;
+			//try
+			//{
+			//	await prov.ExecuteInDbContextScopeAsync(task: async (executionScope) =>
+			//	{
+			//		executionScope.IsolationLevel = System.Data.IsolationLevel.ReadCommitted;
 
-					await prov.ExecuteInDbContextScopeAsync(async e => { await Task.Delay(0); e.Abort(); });
-					await Task.Delay(0);
-					var scopie = DbContextScope<ExampleDbContext>.Current;
-					var contextie = DbContextScope<ExampleDbContext>.CurrentDbContext;
-					throw new TimeoutException();
-				});
-			}
-			catch (TimeoutException)
-			{
+			//		await prov.ExecuteInDbContextScopeAsync(async e => { await Task.Delay(0); e.Abort(); });
+			//		await Task.Delay(0);
+			//		var scopie = DbContextScope<ExampleDbContext>.Current;
+			//		var contextie = DbContextScope<ExampleDbContext>.CurrentDbContext;
+			//		throw new TimeoutException();
+			//	});
+			//}
+			//catch (TimeoutException)
+			//{
 
-			}
+			//}
 
 			// It even works with multiple instances in a scope :)
 			//using (var scope = this.ServiceProvider.CreateScope())
@@ -106,18 +106,6 @@ namespace EntityFramework.DbContextManagement.Example.Example
 
 			//	await Task.Delay(100000);
 			//}
-
-			await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
-			{
-				executionScope.IsolationLevel = System.Data.IsolationLevel.Serializable;
-
-				await Task.Delay(0);
-				var dbContext = DbContextScope<ExampleDbContext>.Current.DbContext;
-				var connection = dbContext.Database.GetDbConnection();
-				//dbContext.Database.SetDbConnection(null);
-				//dbContext.Dispose();
-				Console.WriteLine();
-			});
 
 			//await this.DbContextProvider.ExecuteInDbContextScopeAsync(async () =>
 			//{
@@ -183,7 +171,7 @@ namespace EntityFramework.DbContextManagement.Example.Example
 
 				dbContextScope.DbContext.SaveChanges();
 
-				affected = dbContextScope.DbContext.Database.ExecuteSqlRaw("UPDATE Orders SET UpdateDateTime = date('now')"); // Will only be seen once entity is detached
+				affected = dbContextScope.DbContext.Database.ExecuteSqlRaw("UPDATE Orders SET Name = 'Halloo'"); // Will only be seen once entity is detached
 				if (affected != 1) throw new Exception();
 				//dbContextScope.DbContext.Entry(order).State = EntityState.Detached;
 

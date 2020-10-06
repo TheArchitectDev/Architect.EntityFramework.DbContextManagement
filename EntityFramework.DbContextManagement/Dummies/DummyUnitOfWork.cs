@@ -2,24 +2,19 @@
 using System.Threading.Tasks;
 using System.Transactions;
 using Architect.EntityFramework.DbContextManagement.DbContextScopes;
+using Architect.EntityFramework.DbContextManagement.Observers;
 
 namespace Architect.EntityFramework.DbContextManagement.Dummies
 {
 	internal sealed class DummyUnitOfWork : UnitOfWork
 	{
+		public override DbContextObserver DbContextObserver => null!;
+
 		private bool ThrowsTransactionAborted { get; set; }
 
 		private bool IsInTransaction { get; set; }
 
 		private static void ThrowTransactionAborted() => throw new TransactionAbortedException();
-
-		internal override void TryAddAutoFlushBehavior()
-		{
-		}
-
-		internal override void TryRemoveAutoFlushBehavior()
-		{
-		}
 
 		internal override bool TryStartTransaction()
 		{

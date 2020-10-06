@@ -9,9 +9,9 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 	internal sealed class SaveInterceptor : SaveChangesInterceptor
 	{
 		private Func<bool, CancellationToken, Task> WillSaveChanges { get; }
-		private Action DidSaveChanges { get; }
+		private Action<bool> DidSaveChanges { get; }
 
-		public SaveInterceptor(Func<bool, CancellationToken, Task> willSaveChanges, Action didSaveChanges)
+		public SaveInterceptor(Func<bool, CancellationToken, Task> willSaveChanges, Action<bool> didSaveChanges)
 		{
 			Debug.Assert(willSaveChanges != null);
 			Debug.Assert(didSaveChanges != null);
@@ -36,9 +36,30 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 		public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
 		{
-			this.DidSaveChanges();
+			this.DidSaveChanges(true);
 
 			return base.SavedChanges(eventData, result);
+		}
+
+		public override ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
+		{
+			this.DidSaveChanges(true);
+
+			return base.SavedChangesAsync(eventData, result, cancellationToken);
+		}
+
+		public override void SaveChangesFailed(DbContextErrorEventData eventData)
+		{
+			this.DidSaveChanges(false);
+
+			base.SaveChangesFailed(eventData);
+		}
+
+		public override Task SaveChangesFailedAsync(DbContextErrorEventData eventData, CancellationToken cancellationToken = default)
+		{
+			this.DidSaveChanges(false);
+
+			return base.SaveChangesFailedAsync(eventData, cancellationToken);
 		}
 	}
 }
