@@ -98,7 +98,6 @@ In addition, [scoped execution](#recommended-use) handles many good practices fo
 - The unit of work is automatically transactional. Only once the outermost scope ends successfully, the transaction is committed.
 - If the work is exclusively read-only, no database transaction is started, avoiding needless overhead.
 - If an exception bubbles up from any scope, or `IExecutionScope.Abort()` is called, the entire unit of work fails, and the transaction is rolled back.
-- With `AutoFlush` enabled (default), `SaveChanges` is invoked when a `SELECT` query is executed while there are pending changes.
 - The DbContext's execution strategy is honored. For example, if we use SQL Server with `EnableRetryOnFailure()`, its behavior is applied.
 	- This makes it easy to achieve [connection resilience](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency).
 	- Connection resilience is especially important to "serverless" databases, as with Azure SQL's serverless plan.
