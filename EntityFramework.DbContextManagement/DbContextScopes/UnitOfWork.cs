@@ -37,6 +37,23 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		}
 		private System.Data.IsolationLevel? _isolationLevel;
 
+		internal UnitOfWorkMode Mode { get; private set; }
+
+		/// <summary>
+		/// Promotes the <see cref="UnitOfWork"/> to one of the given <see cref="UnitOfWorkMode"/>.
+		/// Does nothing if it is already of that <see cref="UnitOfWorkMode"/>.
+		/// Throws if the transition is an unsupported one.
+		/// </summary>
+		internal void PromoteToMode(UnitOfWorkMode mode)
+		{
+			this.Mode = (this.Mode, mode) switch
+			{
+				(UnitOfWorkMode.Manual, UnitOfWorkMode.ScopedExecution) => UnitOfWorkMode.ScopedExecution,
+				var (oldValue, newValue) when oldValue == newValue => newValue, // Unchanged
+				_ => throw new NotSupportedException($"A {nameof(UnitOfWork)} transition from {nameof(this.Mode)} {this.Mode} to {mode} is unsupported."),
+			};
+		}
+
 		internal abstract bool TryStartTransaction();
 		internal abstract Task<bool> TryStartTransactionAsync(CancellationToken cancellationToken);
 		internal abstract Task<bool> TryStartTransactionAsync(bool async, CancellationToken cancellationToken);

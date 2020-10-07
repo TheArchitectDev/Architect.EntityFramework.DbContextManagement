@@ -135,7 +135,7 @@ namespace EntityFramework.DbContextManagement.Example.Example
 				await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
 				{
 					executionScope.IsolationLevel = System.Data.IsolationLevel.ReadCommitted;
-					//DbContextScope<ExampleDbContext>.Current.DbContext.SaveChanges();
+					DbContextScope<ExampleDbContext>.Current.DbContext.SaveChanges();
 					await Task.Delay(0);
 					//executionScope.Complete();
 					//executionScope.Abort();

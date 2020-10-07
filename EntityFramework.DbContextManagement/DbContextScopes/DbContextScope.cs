@@ -18,6 +18,23 @@ namespace Architect.EntityFramework.DbContextManagement
 	public abstract class DbContextScope : AsyncAmbientScope<DbContextScope>
 	{
 		/// <summary>
+		/// The <see cref="Microsoft.EntityFrameworkCore.DbContext"/> available in the current scope.
+		/// It is shared with any joined parent and child scopes.
+		/// </summary>
+		public abstract DbContext DbContext { get; }
+		internal abstract UnitOfWork UnitOfWork { get; }
+
+		/// <summary>
+		/// Whether the scope has joined an outer scope.
+		/// </summary>
+		public bool IsNested => this.EffectiveParentScope != null;
+
+		private protected DbContextScope(AmbientScopeOption scopeOption)
+			: base(scopeOption)
+		{
+		}
+
+		/// <summary>
 		/// Creates a new ambiently accessible instance.
 		/// It should be disposed with the help of a using statement.
 		/// </summary>
@@ -40,41 +57,12 @@ namespace Architect.EntityFramework.DbContextManagement
 		{
 			return new DbContextScope<TDbContext>(dbContextFactory, scopeOption);
 		}
-
-		/// <summary>
-		/// The <see cref="Microsoft.EntityFrameworkCore.DbContext"/> available in the current scope.
-		/// It is shared with any joined parent and child scopes.
-		/// </summary>
-		public abstract DbContext DbContext { get; }
-		internal abstract UnitOfWork UnitOfWork { get; }
-
-		/// <summary>
-		/// Allows the scope to be of a particular type.
-		/// Scopes of different types may or may not be compatible.
-		/// </summary>
-		internal DbContextScopeType ScopeType { get; set; }
-
-		/// <summary>
-		/// True if the current scope is an effective root scope, i.e. it has not joined any parent scope.
-		/// </summary>
-		public bool IsRootScope => this.EffectiveParentScope is null;
-
-		/// <summary>
-		/// The <see cref="ScopeType"/> of the parent, or null if there is no parent.
-		/// </summary>
-		internal DbContextScopeType? ParentScopeType => this.EffectiveParentScope?.ScopeType;
-
-		private protected DbContextScope(AmbientScopeOption scopeOption)
-			: base(scopeOption)
-		{
-		}
 	}
 
 	/// <summary>
 	/// An intermediate type between <see cref="DbContextScope"/> and <see cref="DbContextScope{TDbContext}"/>.
 	/// Allows properties such as <see cref="DbContextScope.DbContext"/> to be both overridden and replaced by more specifically-typed ones.
 	/// </summary>
-	/// <typeparam name="TDbContext"></typeparam>
 	public abstract class TypedDbContextScope<TDbContext> : DbContextScope
 		where TDbContext : DbContext
 	{

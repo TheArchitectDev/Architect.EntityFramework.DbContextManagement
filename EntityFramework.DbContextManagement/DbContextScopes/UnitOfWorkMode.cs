@@ -1,15 +1,15 @@
 ﻿namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 {
-	// #TODO: Move into UnitOfWork instead?
 	/// <summary>
-	/// Allows a <see cref="DbContextScope"/> to be marked as being used in a specific way.
+	/// Allows a <see cref="UnitOfWork"/> to be marked as operating in a specific mode.
 	/// </summary>
-	internal enum DbContextScopeType : byte
+	internal enum UnitOfWorkMode : byte
 	{
 		/// <summary>
-		/// No specific usage pattern.
+		/// Manually operated.
+		/// The default.
 		/// </summary>
-		Regular = 0,
+		Manual = 0,
 
 		/// <summary>
 		/// Used for scoped execution.

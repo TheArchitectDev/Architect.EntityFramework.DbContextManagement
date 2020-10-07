@@ -110,8 +110,8 @@ namespace Architect.EntityFramework.DbContextManagement
 			AmbientScopeOption scopeOption,
 			TState state, Func<IExecutionScope<TState>, TResult> task)
 		{
-			return (this as IDbContextProvider<TContext>)
-				.ExecuteInDbContextScopeAsync(scopeOption, state, default, ExecuteSynchronously, async: false, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false)
+			return TransactionalStrategyExecutor.ExecuteInDbContextScopeAsync(this as IDbContextProvider<TContext>, scopeOption, state, default, ExecuteSynchronously,
+				async: false, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false)
 				.AssumeSynchronous();
 
 			// Local function that executes the given task and returns a completed task
@@ -126,8 +126,8 @@ namespace Architect.EntityFramework.DbContextManagement
 			AmbientScopeOption scopeOption,
 			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{
-			return (this as IDbContextProvider<TContext>)
-				.ExecuteInDbContextScopeAsync(scopeOption, state, cancellationToken, task, async: true, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false);
+			return TransactionalStrategyExecutor.ExecuteInDbContextScopeAsync(this as IDbContextProvider<TContext>, scopeOption, state, cancellationToken, task,
+				async: true, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false);
 		}
 	}
 
