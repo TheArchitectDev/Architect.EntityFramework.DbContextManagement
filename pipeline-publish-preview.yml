@@ -34,8 +34,10 @@ steps:
 - script: dotnet pack $(Build.SourcesDirectory)/EntityFramework.DbContextManagement/EntityFramework.DbContextManagement.csproj --no-restore --configuration Release --version-suffix "preview-$(Build.BuildNumber)" -o $(Build.ArtifactStagingDirectory)
   displayName: 'DotNet Pack'
 
-- task: DotNetCoreCLI@2
-  displayName: 'DotNet NuGet Push'
+- task: NuGetAuthenticate@0
   inputs:
-    command: 'push'
-    publishVstsFeed: 'c2594ee8-29e3-40c6-830b-501cbbb7d4f6' # ServiceConnection: TheArchitectDev
+    nuGetServiceConnections: 'TheArchitectDev'
+- task: NuGetCommand@2
+  inputs:
+    command: push
+    nuGetFeedType: external
