@@ -34,7 +34,7 @@ steps:
 #      **/*Tests*.csproj
 
 # DotNet Pack needs to be run from a script in order to use --version-suffix
-- script: dotnet pack **/EntityFramework.DbContextManagement.csproj --no-restore --configuration Release --version-suffix "preview-$(Build.BuildId)" -o $(Build.ArtifactStagingDirectory)
+- script: dotnet pack EntityFramework.DbContextManagement.csproj --no-restore --configuration Release --version-suffix "preview-$(Build.BuildId)" -o $(Build.ArtifactStagingDirectory)
   displayName: 'DotNet Pack'
 
 - task: DotNetCoreCLI@2
