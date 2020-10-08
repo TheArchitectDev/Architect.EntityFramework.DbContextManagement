@@ -1,6 +1,3 @@
-trigger:
-- master
-
 pool:
   vmImage: 'windows-latest'
 
@@ -40,6 +37,5 @@ steps:
 - task: DotNetCoreCLI@2
   displayName: 'DotNet NuGet Push'
   inputs:
-    command: 'nuget push'
-    source: 'https://api.nuget.org/v3/index.json'
-    #api-key: ''
+    command: 'push'
+    publishVstsFeed: 'c2594ee8-29e3-40c6-830b-501cbbb7d4f6' # ServiceConnection: TheArchitectDev
