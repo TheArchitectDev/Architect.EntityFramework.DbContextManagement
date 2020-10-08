@@ -36,7 +36,7 @@ steps:
 
 - task: NuGetAuthenticate@0
   inputs:
-    nuGetServiceConnections: 'TheArchitectDev'
+    nuGetServiceConnections: 'NuGet'
 - task: NuGetCommand@2
   inputs:
     command: push
