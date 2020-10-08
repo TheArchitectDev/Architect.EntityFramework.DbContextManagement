@@ -37,6 +37,7 @@ steps:
   displayName: 'DotNet Pack'
 
 - task: NuGetCommand@2
+  displayName: 'NuGet Push'
   inputs:
     command: 'push'
     nuGetFeedType: 'external'
