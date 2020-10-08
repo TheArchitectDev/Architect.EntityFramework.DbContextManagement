@@ -1,3 +1,5 @@
+trigger: none
+
 pool:
   vmImage: 'windows-latest'
 
@@ -39,5 +41,3 @@ steps:
     command: 'push'
     nuGetFeedType: 'external'
     publishFeedCredentials: 'NuGet'
-    #source: https://www.nuget.org/api/v2/package
-    #apiKey: $(NuGetApiKey)
