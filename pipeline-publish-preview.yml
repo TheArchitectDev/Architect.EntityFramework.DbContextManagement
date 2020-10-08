@@ -1,3 +1,4 @@
+#TODO: Trigger preview publish on master (i.e. when a PR is completed)
 trigger: none
 
 pool:
