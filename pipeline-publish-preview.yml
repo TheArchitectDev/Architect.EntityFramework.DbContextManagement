@@ -36,7 +36,8 @@ steps:
 
 - task: NuGetCommand@2
   inputs:
-    command: push
-    nuGetFeedType: external
-    source: https://www.nuget.org/api/v2/package
-    apiKey: $(NuGetApiKey)
+    command: 'push'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'NuGet'
+    #source: https://www.nuget.org/api/v2/package
+    #apiKey: $(NuGetApiKey)
