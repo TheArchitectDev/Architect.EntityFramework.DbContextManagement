@@ -34,10 +34,8 @@ steps:
 - script: dotnet pack $(Build.SourcesDirectory)/EntityFramework.DbContextManagement/EntityFramework.DbContextManagement.csproj --no-restore --configuration Release --version-suffix "preview-$(Build.BuildNumber)" -o $(Build.ArtifactStagingDirectory)
   displayName: 'DotNet Pack'
 
-- task: NuGetAuthenticate@0
-  inputs:
-    nuGetServiceConnections: 'NuGet'
 - task: NuGetCommand@2
   inputs:
     command: push
     nuGetFeedType: external
+    apiKey: $(NuGetApiKey)
