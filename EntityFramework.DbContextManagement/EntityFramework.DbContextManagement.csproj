@@ -18,9 +18,6 @@
   <PropertyGroup>
     <VersionPrefix>1.0.0</VersionPrefix>
     <PackageReleaseNotes>
-Testing PackageReleaseNotes:
-
-- Example.
     </PackageReleaseNotes>
     <Description>
 #TODO
