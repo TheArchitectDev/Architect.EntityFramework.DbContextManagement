@@ -17,8 +17,13 @@
 
   <PropertyGroup>
     <VersionPrefix>1.0.0</VersionPrefix>
-    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageReleaseNotes>
+Testing PackageReleaseNotes:
+
+- Example.
+    </PackageReleaseNotes>
     <Description>
+#TODO
     </Description>
     <Copyright>The Architect</Copyright>
     <Company>The Architect</Company>
