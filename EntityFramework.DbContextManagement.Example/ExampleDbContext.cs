@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace EntityFramework.DbContextManagement.Example
 {
@@ -38,17 +36,5 @@ namespace EntityFramework.DbContextManagement.Example
 				entity.HasKey(c => c.Id);
 			});
 		}
-
-		//public override int SaveChanges()
-		//{
-		//	System.Console.WriteLine("Saving changes!");
-		//	return base.SaveChanges();
-		//}
-
-		//public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
-		//{
-		//	System.Console.WriteLine("Original savechangesasync.");
-		//	return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-		//}
 	}
 }

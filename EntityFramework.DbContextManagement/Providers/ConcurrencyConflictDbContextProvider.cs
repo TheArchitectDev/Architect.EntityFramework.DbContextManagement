@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Architect.AmbientContexts;
+using Architect.EntityFramework.DbContextManagement.DbContextScopes;
 using Architect.EntityFramework.DbContextManagement.Providers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -14,20 +16,37 @@ namespace Architect.EntityFramework.DbContextManagement
 	/// An <see cref="IDbContextProvider{TContext}"/> implementation that wraps the original one, throwing a <see cref="DbUpdateConcurrencyException"/> on the first attempt, at the end of the executed task.
 	/// </para>
 	/// <para>
+	/// This helps test retry behavior, by providing a scenario where the second attempt should succeed.
+	/// </para>
+	/// <para>
 	/// By executing all of the work before throwing, the most mistakes are detected (such as an auto-increment ID already being assigned when the next attempt begins).
 	/// </para>
 	/// </summary>
 	public class ConcurrencyConflictDbContextProvider<TContext, TDbContext> : OverridingDbContextProvider<TContext, TDbContext>
 		where TDbContext : DbContext
 	{
-		private object? LastSeenUnitOfWork { get; set; }
-
 		public override DbContextScopeOptions Options => this.WrappedProvider.Options;
+
+		private ConditionalWeakTable<UnitOfWork, object> SeenUnitsOfWork { get; } = new ConditionalWeakTable<UnitOfWork, object>();
 
 		private IDbContextProvider<TContext> WrappedProvider { get; }
 
 		private bool AfterCommit { get; }
 
+		/// <summary>
+		/// <para>
+		/// Constructs an <see cref="IDbContextProvider{TContext}"/> implementation wrapping the given one.
+		/// It throws a <see cref="DbUpdateConcurrencyException"/> on the first attempt of variants of
+		/// <see cref="IDbContextProvider{TContext}.ExecuteInDbContextScope{TState, TResult}(AmbientScopeOption, TState, Func{IExecutionScope{TState}, TResult})"/>, at the end of the executed task.
+		/// </para>
+		/// <para>
+		/// This helps test retry behavior, by providing a scenario where the second attempt should succeed.
+		/// </para>
+		/// <para>
+		/// By executing all of the work before throwing, the most mistakes are detected (such as an auto-increment ID already being assigned when the next attempt begins).
+		/// </para>
+		/// </summary>
+		/// <param name="wrappedProvider"></param>
 		/// <param name="afterCommit">If true, any ongoing transaction is committed before the exception occurs, simulating an exception on commit where the commit has actually succeeded.</param>
 		public ConcurrencyConflictDbContextProvider(IDbContextProvider<TContext> wrappedProvider, bool afterCommit = false)
 		{
@@ -69,11 +88,15 @@ namespace Architect.EntityFramework.DbContextManagement
 
 		private bool ShouldThrow()
 		{
-			// We will only throw (at the end of the operation) if we see a unit of work for the first time
+			// We will only throw if we see a unit of work for the first time
 			var unitOfWork = DbContextScope<TDbContext>.Current.UnitOfWork;
-			if (unitOfWork == this.LastSeenUnitOfWork) return false;
 
-			this.LastSeenUnitOfWork = unitOfWork;
+			if (this.SeenUnitsOfWork.TryGetValue(unitOfWork, out _)) return false; // Already seen
+
+			var ourKey = new object();
+			var registeredKey = this.SeenUnitsOfWork.GetValue(unitOfWork, _ => ourKey);
+
+			if (registeredKey != ourKey) return false; // Lost a race condition, so we are not the one that should throw
 
 			return true;
 		}

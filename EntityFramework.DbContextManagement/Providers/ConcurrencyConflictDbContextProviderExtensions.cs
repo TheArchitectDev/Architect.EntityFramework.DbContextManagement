@@ -49,8 +49,8 @@ namespace Architect.EntityFramework.DbContextManagement
 					? (Func<IServiceProvider, object>)(_ => previousRegistration.ImplementationInstance)
 					: (serviceProvider => ActivatorUtilities.CreateInstance(serviceProvider, previousRegistration.ImplementationType!)));
 
-			services.AddTransient<IDbContextProvider<TDbContextRepresentation>>(CreateInstance); // Transient because it tracks the last seen unit of work
-			services.AddTransient<IDbContextProvider<TDbContext>>(CreateInstance); // Transient because it tracks the last seen unit of work
+			services.AddSingleton<IDbContextProvider<TDbContextRepresentation>>(CreateInstance);
+			services.AddSingleton<IDbContextProvider<TDbContext>>(CreateInstance);
 			return services;
 
 			ConcurrencyConflictDbContextProvider<TDbContextRepresentation, TDbContext> CreateInstance(IServiceProvider serviceProvider)

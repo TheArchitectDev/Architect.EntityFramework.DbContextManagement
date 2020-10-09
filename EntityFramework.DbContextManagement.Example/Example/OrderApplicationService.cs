@@ -164,7 +164,7 @@ namespace EntityFramework.DbContextManagement.Example.Example
 
 				reloaded.Name = "Henkieeee";
 				dbContextScope.DbContext.Database.ExecuteSqlRaw("SELECT date('now');");
-				
+
 				reloaded.Children.First().Name = "CHANGED";
 				var two = new Child(2, "Two"); // Code-generated ID issue!!
 				reloaded.AddChild(two);
@@ -195,10 +195,8 @@ namespace EntityFramework.DbContextManagement.Example.Example
 					{
 						executionScope.IsolationLevel = System.Data.IsolationLevel.ReadCommitted;
 						await Task.Delay(0);
-						{
-							var theOrder = (executionScope.DbContext as ExampleDbContext).Orders.Single();
-							theOrder.UpdateDateTime = DateTime.Now;
-						}
+						var theOrder = (executionScope.DbContext as ExampleDbContext).Orders.Single();
+						theOrder.UpdateDateTime = DateTime.Now;
 						executionScope.DbContext.SaveChanges();
 						//executionScope.Abort();
 					});
