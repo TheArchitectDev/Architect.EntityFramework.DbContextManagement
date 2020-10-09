@@ -65,7 +65,6 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 					var result = await this.WrappedStrategy.ExecuteAsync(state, operation, verifySucceeded, cancellationToken);
 					return result;
 				}
-				// #TODO: Confirm only DbUpdateConcurrencyException and not DbConcurrencyException
 				catch (DbUpdateConcurrencyException) when (this.RetriesOnOptimisticConcurrencyFailure)
 				{
 					this.RetryCount++;
