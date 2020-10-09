@@ -72,13 +72,14 @@ public class MyApplicationService
 
     public async Task PerformSomeUnitOfWork()
     {
+		// Provide a DbContext and execute a block of code within its scope
         await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
         {
             // Until the end of this block, IDbContextAccessor can access the scoped DbContext
             // It can do so from any number of invocations deep (not shown here)
             await this.MyRepository.AddOrder(new Order());
             
-            // If we made modifications, we should save them
+            // If we have made modifications, we should save them
             // We could save here or as part of the repository methods, depending on our preference
             await executionScope.DbContext.SaveChangesAsync();
         }); // If no exceptions occurred and this scope was not nested in another, the transaction is committed asynchronously here
