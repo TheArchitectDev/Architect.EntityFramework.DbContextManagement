@@ -104,7 +104,7 @@ In addition, [scoped execution](#recommended-use) handles many good practices fo
 - If the work is exclusively read-only, no database transaction is started, avoiding needless overhead.
 - If an exception bubbles up from any scope, or `IExecutionScope.Abort()` is called, the entire unit of work fails, and the transaction is rolled back.
     - Further attempts to use the DbContext result in a `TransactionAbortedException`, protecting against inadvertently committing only the second half of a unit of work.
-- The DbContext's execution strategy is honored. For example, if we use SQL Server with `EnableRetryOnFailure()`, its behavior is applied.
+- The DbContext's execution strategy is automatically used. For example, if we use SQL Server with `EnableRetryOnFailure()`, its behavior is applied.
     - This makes it easy to achieve [connection resilience](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency).
     - Connection resilience is especially important to "serverless" databases, as with Azure SQL's serverless plan.
 - Retry behavior is applied at the correct level. For example, if `EnableRetryOnFailure()` causes a retry, then the entire code block is retried with a clean DbContext. This avoids subtle bugs caused by state leakage.
