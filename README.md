@@ -60,9 +60,9 @@ From the orchestrating layer, which eventually leads to the invocation of a repo
 public class MyApplicationService
 {
     private IDbContextProvider<MyDbContext> DbContextProvider { get; }
-    private MyRepository MyRepository { get; }
+    private IMyRepository MyRepository { get; }
 
-    public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, MyRepository myRepository)
+    public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, IMyRepository myRepository)
     {
         // Inject an IDbContextProvider
         this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));
@@ -490,9 +490,9 @@ Follow the [recommended use](#recommended-use), but implement the orchestrating 
 public class MyApplicationService
 {
     private IDbContextProvider<MyDbContext> DbContextProvider { get; }
-    private MyRepository MyRepository { get; }
+    private IMyRepository MyRepository { get; }
 
-    public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, MyRepository myRepository)
+    public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, IMyRepository myRepository)
     {
         // Inject an IDbContextProvider
         this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));
