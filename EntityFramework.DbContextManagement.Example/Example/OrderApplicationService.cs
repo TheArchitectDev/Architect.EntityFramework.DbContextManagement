@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFramework.DbContextManagement.Example.Example
 {
@@ -132,15 +129,6 @@ namespace EntityFramework.DbContextManagement.Example.Example
 
 			await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
 			{
-				await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
-				{
-					executionScope.IsolationLevel = System.Data.IsolationLevel.ReadCommitted;
-					DbContextScope<ExampleDbContext>.Current.DbContext.SaveChanges();
-					await Task.Delay(0);
-					//executionScope.Complete();
-					//executionScope.Abort();
-				});
-
 				executionScope.IsolationLevel = System.Data.IsolationLevel.ReadCommitted;
 				var dbContextScope = DbContextScope<ExampleDbContext>.Current;
 
@@ -194,6 +182,36 @@ namespace EntityFramework.DbContextManagement.Example.Example
 				var reloaded2 = dbContextScope.DbContext.Orders.Join(dbContextScope.DbContext.Children, o => o.Id, c => c.OrderId, (o, c) => new { o, c }).ToList();
 
 				//executionScope.Complete();
+			});
+
+			var attemptNumber = 1;
+			await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
+			{
+				var loaded = (executionScope.DbContext as ExampleDbContext).Orders.Include(o => o.Children).Single();
+
+				if (attemptNumber == 1)
+				{
+					await this.DbContextProvider.ExecuteInDbContextScopeAsync(AmbientScopeOption.ForceCreateNew, async executionScope =>
+					{
+						executionScope.IsolationLevel = System.Data.IsolationLevel.ReadCommitted;
+						await Task.Delay(0);
+						{
+							var theOrder = (executionScope.DbContext as ExampleDbContext).Orders.Single();
+							theOrder.UpdateDateTime = DateTime.Now;
+						}
+						executionScope.DbContext.SaveChanges();
+						//executionScope.Abort();
+					});
+				}
+
+				attemptNumber++;
+
+				var reloaded = (executionScope.DbContext as ExampleDbContext).Orders.Include(o => o.Children).Single();
+
+				reloaded.Name = "UpdatusMaximus";
+				Console.WriteLine("Updating...");
+				executionScope.DbContext.SaveChanges();
+				Console.WriteLine("Updated.");
 
 				Console.WriteLine();
 			});

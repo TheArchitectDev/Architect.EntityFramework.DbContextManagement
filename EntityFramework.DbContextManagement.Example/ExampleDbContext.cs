@@ -25,7 +25,9 @@ namespace EntityFramework.DbContextManagement.Example
 
 			modelBuilder.Entity<Order>(entity =>
 			{
-				entity.Property(o => o.UpdateDateTime).IsConcurrencyToken();
+				entity.Property(o => o.UpdateDateTime)
+					.HasPrecision(3)
+					.IsConcurrencyToken();
 				entity.HasMany(o => o.Children);
 			});
 

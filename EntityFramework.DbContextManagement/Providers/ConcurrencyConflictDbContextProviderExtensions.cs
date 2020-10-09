@@ -47,7 +47,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			var implementationFactory = previousRegistration.ImplementationFactory ??
 				(previousRegistration.ImplementationInstance != null
 					? (Func<IServiceProvider, object>)(_ => previousRegistration.ImplementationInstance)
-					: (Func<IServiceProvider, object>)(serviceProvider => ActivatorUtilities.CreateInstance(serviceProvider, previousRegistration.ImplementationType!)));
+					: (serviceProvider => ActivatorUtilities.CreateInstance(serviceProvider, previousRegistration.ImplementationType!)));
 
 			services.AddTransient<IDbContextProvider<TDbContextRepresentation>>(CreateInstance); // Transient because it tracks the last seen unit of work
 			services.AddTransient<IDbContextProvider<TDbContext>>(CreateInstance); // Transient because it tracks the last seen unit of work
