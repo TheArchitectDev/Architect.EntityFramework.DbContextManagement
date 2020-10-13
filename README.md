@@ -10,7 +10,7 @@ The venerable Mehdi El Gueddari explains the benefits of this approach in his lo
 
 The recommended usage pattern, dubbed "scoped execution", comes with many additional advantages, [outlined below](#advantages-of-scoped-execution).
 
-Register the component on startup:
+**Register** the component on startup:
 
 ```cs
 public void ConfigureServices(IServiceCollection services)
@@ -24,7 +24,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-Access the current DbContext from the data access layer:
+**Access** the current DbContext from the data access layer:
 
 ```cs
 public class MyRepository : IMyRepository
@@ -54,7 +54,7 @@ public class MyRepository : IMyRepository
 
 So far, the above would throw, since we have not made a DbContext available.
 
-From the orchestrating layer, which eventually leads to the invocation of a repository method, provide a DbContext:
+**Provide** a DbContext from the orchestrating layer, which eventually calls down into the data access layer (directly or indirectly):
 
 ```cs
 public class MyApplicationService
@@ -89,33 +89,36 @@ public class MyApplicationService
 
 ### Advantages
 
+Managing DbContexts with `IDbContextProvider` and `IDbContextAccessor` provides several advantages:
+
 - Stateless repositories are simpler. (We avoid the injection of a DbContext, which is a stateful resource.)
-- We can control the DbContext lifetime and transaction boundaries from the place that makes sense, without polluting methods with extra parameters.
-- The DbContext lifetime easily matches the transaction boundaries.
+- We can control the DbContext lifetime and transaction boundaries from the place that makes sense, without polluting any methods with extra parameters.
+- The DbContext lifetime is easily matched to the transaction boundaries.
 - DbContext management is independent of the application type or architecture. (For example, this approach works perfectly with Blazor Server, avoiding its [usual troubles](https://docs.microsoft.com/en-us/aspnet/core/blazor/blazor-server-ef-core?view=aspnetcore-3.1). It also behaves exactly the same in integration tests.)
-- Multiple DbContext subtypes are handled independently.
-- A unit of work may be nested. For example, a set of operations may explicitly require being transactional, while being able to participate in an encompassing transaction if there is one.
-- If we want to [keep our DbContext type `internal`](#internal-dbcontext-types) to the data access layer, this is possible without compromise to any of the above.
+- Different concrete DbContext subtypes are handled independently.
+- A unit of work may be nested. For example, a set of operations may explicitly require being transactional. If there is an encompassing transaction, they can join it; if not, they can have their own transaction.
+- It is possible to [keep the DbContext type `internal`](#internal-dbcontext-types) to the data access layer, without compromising any of the above.
 
 #### Advantages of Scoped Execution
 
-In addition, [scoped execution](#recommended-use) handles many good practices for us. It prevents developers from forgetting them, implementing them incorrectly, and having to write boilerplate code for them.
+Additionally, the recommended [scoped execution](#recommended-use) (as opposed to [manual operation](#manual-use)) handles many good practices for us. It prevents developers from forgetting them, implementing them incorrectly, or having to write boilerplate code for them.
 
 - The unit of work is automatically transactional. Only once the outermost scope ends successfully, the transaction is committed.
-- If the work is exclusively read-only, no database transaction is started, avoiding needless overhead.
+- If the work is exclusively read-only, no database transaction is used, avoiding needless overhead.
 - If an exception bubbles up from any scope, or `IExecutionScope.Abort()` is called, the entire unit of work fails, and the transaction is rolled back.
     - Further attempts to use the DbContext result in a `TransactionAbortedException`, protecting against inadvertently committing only the second half of a unit of work.
-- The DbContext's execution strategy is automatically used. For example, if we use SQL Server with `EnableRetryOnFailure()`, its behavior is applied.
+- The DbContext's execution strategy is used. For example, if we use SQL Server with `EnableRetryOnFailure()`, its behavior is applied.
     - This makes it easy to achieve [connection resilience](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency).
     - Connection resilience is especially important to "serverless" databases, as with Azure SQL's serverless plan.
 - Retry behavior is applied at the correct level. For example, if `EnableRetryOnFailure()` causes a retry, then the entire code block is retried with a clean DbContext. This avoids subtle bugs caused by state leakage.
     - Make sure to consider which behavior should be part of the retryable unit. Generally, doing as much as possible _inside_ the scope is more likely to be correct.
-    - It is advisable to load, modify, and save within a single scope. A retry will run the entire operation from scratch, taking into account any changes when domain rules are validated once more.
-    - This behavior is easily [tested](#testing-retries).
-- If failure on commit occurs, retry behavior is [avoided](#connection-resilience), preventing the risk of data corruption.
+    - It is advisable to load, modify, and save within a single scope. A retry will run the entire operation from scratch. This way, domain rules can be validated against the current state if a retry takes place.
+    - This behavior is [easily tested](#testing-retries).
+- We [avoid](#connection-resilience) the risk of data corruption that Entity Framework causes in case of a failure on commit.
     - When using a retrying execution strategy, Entity Framework would normally [retry even after a failure on commit](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency#transaction-commit-failure-and-the-idempotency-issue), which could lead to data corruption.
+	- This is not fixed in Entity Framework [yet](https://github.com/dotnet/efcore/issues/22904#issuecomment-705743508).
 - When using row versions or concurrency tokens for optimistic concurrency, retries can be configured to apply to concurrency conflicts as well, using `ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure`. By loading, modifying, and saving in a single code block, optimistic concurrency conflicts can be handled with zero effort.
-    - This behavior is easily [tested](#testing-retries).
+    - This behavior is [easily tested](#testing-retries).
 
 ### Deeper Service Hierarchies
 
@@ -483,9 +486,9 @@ If a method _does_ warrant a fully retrying implementation even for failure on c
 
 If we merely want to control the DbContext, without the [advantages](#advantages-of-scoped-execution) provided by [scoped execution](#recommended-use), we can.
 
-Note that the manual approach merely provides a DbContext and lets it be accessed. The application code is responsible for transactions, use of execution strategies, etc.
+Note that the manual approach merely provides a DbContext and lets it be accessed. The application code is responsible for transactions, the use of execution strategies, retries, etc.
 
-Follow the [recommended use](#recommended-use), but implement the orchestrating layer as follows:
+**Register** the component and **access** the DbContext according to the [recommended use](#recommended-use), but **provide** the DbContext from the orchestrating layer as follows:
 
 ```cs
 public class MyApplicationService
