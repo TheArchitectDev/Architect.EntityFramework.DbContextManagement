@@ -149,6 +149,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 					}
 					catch (Exception e) when (options.AvoidFailureOnCommitRetries) // #TODO: Test, particularly that transaction is now GONE! It must be gone.
 					{
+						// TODO Enhancement: Use interceptors to avoid retry on manual commits as well? But might also be implemented by EF: https://github.com/dotnet/efcore/issues/22904#issuecomment-705743508
 						throw new Exception("The operation failed on commit. Since it is possible that the commit succeeded, potential retries were avoided.", e);
 					}
 				}
