@@ -199,7 +199,7 @@ If any inner scope fails to call `IExecutionScope.Complete()`, then any ongoing 
 
 #### Controlling Scope Nesting
 
-Scope nesting can be controlled by explicitly passing an `AmbientScopeOption` to `ExecuteInDbContextScopeAsync()`, or by [changing](#defaultscopeoption) the default value on registration.
+Scope nesting can be controlled by explicitly passing an `AmbientScopeOption` to `ExecuteInDbContextScopeAsync()`, or by [changing the default value](#defaultscopeoption) on registration.
 
 - `AmbientScopeOption.JoinExisting`, the default, causes the encompassing scope to be joined if there is one.
 - `AmbientScopeOption.NoNesting` throws an exception if an encompassing scope is present.
@@ -239,7 +239,7 @@ The usual way to add optimistic concurrency detection is by [concurrency tokens 
 
 Furthermore, when this option is used, retries (regardless of their reason) can be tested with [integration tests](#integration-testing-the-orchestrating-layer). By wrapping the `IDbContextProvider<T>` in a `ConcurrencyConflictDbContextProvider<T>`, we get a `DbUpdateConcurrencyException` exception at the _end_ of the outermost task, and only on the first attempt. With `RetryOnOptimisticConcurrencyFailure` enabled, we can test that the result is the same as when no concurrency exceptions were thrown.
 
-For full integration tests that get their dependencies from an `IServiceProvider`, wrapping the `IDbContextProvider<T>` in a `ConcurrencyConflictDbContextProvider<T>` is achieved through `IServiceCollection.AddConcurrencyConflictDbContextProvider`.
+For full integration tests that get their dependencies from an `IServiceProvider`, wrapping the `IDbContextProvider<T>` in a `ConcurrencyConflictDbContextProvider<T>` is achieved through `IServiceCollection.AddConcurrencyConflictDbContextProvider()`.
 
 The section on [integration tests](#integration-testing-the-orchestrating-layer) provides code samples.
 
