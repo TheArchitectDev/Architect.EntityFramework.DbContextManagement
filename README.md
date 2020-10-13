@@ -15,12 +15,12 @@ The recommended usage pattern, dubbed "scoped execution", comes with many additi
 ```cs
 public void ConfigureServices(IServiceCollection services)
 {
-  // Register the DbContext with one of the EF 5+ factory-based extensions
-  services.AddPooledDbContextFactory<MyDbContext>(context =>
-    context.UseSqlServer(connectionString, sqlServer => sqlServer.EnableRetryOnFailure()));
+   // Register the DbContext with one of the EF 5+ factory-based extensions
+   services.AddPooledDbContextFactory<MyDbContext>(context =>
+      context.UseSqlServer(connectionString, sqlServer => sqlServer.EnableRetryOnFailure()));
 
-  // Register this library
-  services.AddDbContextScope<MyDbContext>();
+   // Register this library
+   services.AddDbContextScope<MyDbContext>();
 }
 ```
 
@@ -29,26 +29,26 @@ public void ConfigureServices(IServiceCollection services)
 ```cs
 public class MyRepository : IMyRepository
 {
-  // This computed property abstracts away how we obtain the DbContext
-  private MyDbContext DbContext => this.DbContextAccessor.CurrentDbContext;
-  
-  private IDbContextAccessor<MyDbContext> DbContextAccessor { get; }
-  
-  public OrderRepo(IDbContextAccessor<MyDbContext> dbContextAccessor)
-  {
-    // Inject an IDbContextAccessor
-    this.DbContextAccessor = dbContextAccessor ?? throw new ArgumentNullException(nameof(dbContextAccessor));
-  }
-  
-  public Task<Order> GetOrderById(long id)
-  {
-    return this.DbContext.Orders.SingleOrDefaultAsync(o.Id == id);
-  }
-  
-  public Task AddOrder(order)
-  {
-    return this.DbContext.Orders.AddAsync(order);
-  }
+   // This computed property abstracts away how we obtain the DbContext
+   private MyDbContext DbContext => this.DbContextAccessor.CurrentDbContext;
+   
+   private IDbContextAccessor<MyDbContext> DbContextAccessor { get; }
+   
+   public OrderRepo(IDbContextAccessor<MyDbContext> dbContextAccessor)
+   {
+      // Inject an IDbContextAccessor
+      this.DbContextAccessor = dbContextAccessor ?? throw new ArgumentNullException(nameof(dbContextAccessor));
+   }
+   
+   public Task<Order> GetOrderById(long id)
+   {
+      return this.DbContext.Orders.SingleOrDefaultAsync(o.Id == id);
+   }
+   
+   public Task AddOrder(order)
+   {
+      return this.DbContext.Orders.AddAsync(order);
+   }
 }
 ```
 
@@ -59,31 +59,31 @@ So far, the above would throw, since we have not made a DbContext available.
 ```cs
 public class MyApplicationService
 {
-  private IDbContextProvider<MyDbContext> DbContextProvider { get; }
-  private IMyRepository MyRepository { get; }
+   private IDbContextProvider<MyDbContext> DbContextProvider { get; }
+   private IMyRepository MyRepository { get; }
 
-  public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, IMyRepository myRepository)
-  {
-    // Inject an IDbContextProvider
-    this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));
-    
-    this.MyRepository = myRepository ?? throw new ArgumentNullException(nameof(myRepository));
-  }
-
-  public async Task PerformSomeUnitOfWork()
-  {
-    // Provide a DbContext and execute a block of code within its scope
-    await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
-    {
-      // Until the end of this block, IDbContextAccessor can access the scoped DbContext
-      // It can do so from any number of invocations deep (not shown here)
-      await this.MyRepository.AddOrder(new Order());
+   public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, IMyRepository myRepository)
+   {
+      // Inject an IDbContextProvider
+      this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));
       
-      // If we have made modifications, we should save them
-      // We could save here or as part of the repository methods, depending on our preference
-      await executionScope.DbContext.SaveChangesAsync();
-    }); // If no exceptions occurred and this scope was not nested in another, the transaction is committed asynchronously here
-  }
+      this.MyRepository = myRepository ?? throw new ArgumentNullException(nameof(myRepository));
+   }
+
+   public async Task PerformSomeUnitOfWork()
+   {
+      // Provide a DbContext and execute a block of code within its scope
+      await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
+      {
+         // Until the end of this block, IDbContextAccessor can access the scoped DbContext
+         // It can do so from any number of invocations deep (not shown here)
+         await this.MyRepository.AddOrder(new Order());
+         
+         // If we have made modifications, we should save them
+         // We could save here or as part of the repository methods, depending on our preference
+         await executionScope.DbContext.SaveChangesAsync();
+      }); // If no exceptions occurred and this scope was not nested in another, the transaction is committed asynchronously here
+   }
 }
 ```
 
@@ -106,19 +106,19 @@ Additionally, the recommended [scoped execution](#recommended-use) (as opposed t
 - The unit of work is automatically transactional. Only once the outermost scope ends successfully, the transaction is committed.
 - If the work is exclusively read-only, no database transaction is used, avoiding needless overhead.
 - If an exception bubbles up from any scope, or `IExecutionScope.Abort()` is called, the entire unit of work fails, and the transaction is rolled back.
-  - Further attempts to use the DbContext result in a `TransactionAbortedException`, protecting against inadvertently committing only the second half of a unit of work.
+   - Further attempts to use the DbContext result in a `TransactionAbortedException`, protecting against inadvertently committing only the second half of a unit of work.
 - The DbContext's execution strategy is used. For example, if we use SQL Server with `EnableRetryOnFailure()`, its behavior is applied.
-  - This makes it easy to achieve [connection resilience](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency).
-  - Connection resilience is especially important to "serverless" databases, as with Azure SQL's serverless plan.
+   - This makes it easy to achieve [connection resilience](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency).
+   - Connection resilience is especially important to "serverless" databases, as with Azure SQL's serverless plan.
 - Retry behavior is applied at the correct level. For example, if `EnableRetryOnFailure()` causes a retry, then the entire code block is retried with a clean DbContext. This avoids subtle bugs caused by state leakage.
-  - Make sure to consider which behavior should be part of the retryable unit. Generally, doing as much as possible _inside_ the scope is more likely to be correct.
-  - It is advisable to load, modify, and save within a single scope. A retry will run the entire operation from scratch. This way, domain rules can be validated against the current state if a retry takes place.
-  - This behavior is [easily tested](#testing-retries).
+   - Make sure to consider which behavior should be part of the retryable unit. Generally, doing as much as possible _inside_ the scope is more likely to be correct.
+   - It is advisable to load, modify, and save within a single scope. A retry will run the entire operation from scratch. This way, domain rules can be validated against the current state if a retry takes place.
+   - This behavior is [easily tested](#testing-retries).
 - We [avoid](#connection-resilience) the risk of data corruption that Entity Framework causes in case of a failure on commit.
-  - When using a retrying execution strategy, Entity Framework would normally [retry even after a failure on commit](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency#transaction-commit-failure-and-the-idempotency-issue), which could lead to data corruption.
-  - This is not fixed in Entity Framework [yet](https://github.com/dotnet/efcore/issues/22904#issuecomment-705743508).
+   - When using a retrying execution strategy, Entity Framework would normally [retry even after a failure on commit](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency#transaction-commit-failure-and-the-idempotency-issue), which could lead to data corruption.
+   - This is not fixed in Entity Framework [yet](https://github.com/dotnet/efcore/issues/22904#issuecomment-705743508).
 - When using row versions or concurrency tokens for optimistic concurrency, retries can be configured to apply to concurrency conflicts as well, using `ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure`. By loading, modifying, and saving in a single code block, optimistic concurrency conflicts can be handled with zero effort.
-  - This behavior is [easily tested](#testing-retries).
+   - This behavior is [easily tested](#testing-retries).
 
 ### Deeper Service Hierarchies
 
@@ -128,29 +128,29 @@ The `IDbContextAccessor` can access the DbContext provided by the `IDbContextPro
 // Application service
 public async Task PerformSomeUnitOfWork()
 {
-  await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
-  {
-    var order = await this.MyDomainService.GetExampleOrder();
-    
-    // ...
-    
-    executionScope.Complete();
-  });
+   await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
+   {
+      var order = await this.MyDomainService.GetExampleOrder();
+      
+      // ...
+      
+      executionScope.Complete();
+   });
 }
 
 // Domain service
 public Task GetExampleOrder()
 {
-  return this.OrderRepo.GetOrderById(1);
+   return this.OrderRepo.GetOrderById(1);
 }
 
 // Repository
 public Task<Order> GetOrderById(long id)
 {
-  // As long as it is in scope, the ambient DbContext provided by the IDbContextProvider is visible to the IDbContextAccessor from anywhere
-  var dbContext = this.DbContextAccessor.DbContext;
-  
-  return dbContext.Orders.SingleOrDefaultAsync(o.Id == id);
+   // As long as it is in scope, the ambient DbContext provided by the IDbContextProvider is visible to the IDbContextAccessor from anywhere
+   var dbContext = this.DbContextAccessor.DbContext;
+   
+   return dbContext.Orders.SingleOrDefaultAsync(o.Id == id);
 }
 ```
 
@@ -165,33 +165,33 @@ Both scenarios above are supported by default, because a scope joins the encompa
 ```cs
 public async Task AddMoneyTransfer(Account account, Transfer transfer)
 {
-  account.Balance += transfer.Amount;
-  
-  await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
-  {
-    // For demonstration purposes, say that the repository methods invoke SaveChangesAsync()
-    await this.AccountRepo.UpdateAndSave(account);
-    await this.TransferRepo.AddAndSave(transfer);
-    
-    executionScope.Complete();
-  });
+   account.Balance += transfer.Amount;
+   
+   await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
+   {
+      // For demonstration purposes, say that the repository methods invoke SaveChangesAsync()
+      await this.AccountRepo.UpdateAndSave(account);
+      await this.TransferRepo.AddAndSave(transfer);
+      
+      executionScope.Complete();
+   });
 }
 
 // This methods calls the above one, and does more
 public async Task TransferMoney(Account fromAccount, Account toAccount, Transfer transfer)
 {
-  fromAccount.Balance -= transfer.Amount;
-  
-  await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
-  {
-    // For demonstration purposes, say that the repository methods invoke SaveChangesAsync()
-    await this.AccountRepo.UpdateAndSave(fromAccount);
-    
-    // This method will use the DbContext we provided, and leave committing the transaction to us
-    await this.AddMoneyTransfer(toAccount, transfer);
-    
-    executionScope.Complete();
-  }); // CommitTransactionAsync() is invoked when our scope ends, if we are the outermost scope
+   fromAccount.Balance -= transfer.Amount;
+   
+   await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
+   {
+      // For demonstration purposes, say that the repository methods invoke SaveChangesAsync()
+      await this.AccountRepo.UpdateAndSave(fromAccount);
+      
+      // This method will use the DbContext we provided, and leave committing the transaction to us
+      await this.AddMoneyTransfer(toAccount, transfer);
+      
+      executionScope.Complete();
+   }); // CommitTransactionAsync() is invoked when our scope ends, if we are the outermost scope
 }
 ```
 
@@ -212,9 +212,9 @@ A number of options can be configured on registration:
 ```cs
 // The defaults are displayed here
 services.AddDbContextScope<MyDbContext>(scope => scope
-  .DefaultScopeOption(AmbientScopeOption.JoinExisting)
-  .ExecutionStrategyOptions(ExecutionStrategyOptions.None)
-  .AvoidFailureOnCommitRetries(true));
+   .DefaultScopeOption(AmbientScopeOption.JoinExisting)
+   .ExecutionStrategyOptions(ExecutionStrategyOptions.None)
+   .AvoidFailureOnCommitRetries(true));
 ```
 
 #### DefaultScopeOption
@@ -222,7 +222,7 @@ services.AddDbContextScope<MyDbContext>(scope => scope
 [Scope nesting](#controlling-scope-nesting) is controlled by the `AmbientScopeOption`, optionally passed when the `IDbContextProvider` creates a scope. The default value can be configured like this:
 
 ```cs
-  .DefaultScopeOption(AmbientScopeOption.NoNesting)
+   .DefaultScopeOption(AmbientScopeOption.NoNesting)
 ```
 
 #### ExecutionStrategyOptions
@@ -234,7 +234,7 @@ But we can get more benefits. The format used by scoped execution lends itself p
 The usual way to add optimistic concurrency detection is by [concurrency tokens or row versions](https://docs.microsoft.com/en-us/ef/core/modeling/concurrency?tabs=fluent-api). Once they are in place, the following option causes such conflicts to lead to a retry:
 
 ```cs
-  .ExecutionStrategyOptions(ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure)
+   .ExecutionStrategyOptions(ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure)
 ```
 
 Furthermore, when this option is used, retries (regardless of their reason) can be tested with [integration tests](#integration-testing-the-orchestrating-layer). By wrapping the `IDbContextProvider<T>` in a `ConcurrencyConflictDbContextProvider<T>`, we get a `DbUpdateConcurrencyException` exception at the _end_ of the outermost task, and only on the first attempt. With `RetryOnOptimisticConcurrencyFailure` enabled, we can test that the result is the same as when no concurrency exceptions were thrown.
@@ -250,7 +250,7 @@ Retrying after a failure on commit is [risky](#connection-resilience). By defaul
 This recommended feature can be disabled as follows:
 
 ```cs
-  .AvoidFailureOnCommitRetries(false)
+   .AvoidFailureOnCommitRetries(false)
 ```
 
 ### Internal DbContext Types
@@ -285,18 +285,18 @@ Clearly, the above registration must be made from the project that contains `Ord
 ```cs
 public static IServiceCollection AddDatabaseInfrastructure(this IServiceCollection services)
 {
-  // DbContext
-  services.AddPooledDbContextFactory<OrderDbContext>(context => context.UseSqlite("Filename=:memory:"));
+   // DbContext
+   services.AddPooledDbContextFactory<OrderDbContext>(context => context.UseSqlite("Filename=:memory:"));
 
-  // Scoped DbContext management
-  services.AddDbContextScope<IOrderDatabase, OrderDbContext>(scope =>
-    scope.ExecutionStrategyOptions(ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure));
+   // Scoped DbContext management
+   services.AddDbContextScope<IOrderDatabase, OrderDbContext>(scope =>
+      scope.ExecutionStrategyOptions(ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure));
 
-  // Repositories
-  services.AddSingleton<IOrderRepo, OrderRepo>();
-  // ...
+   // Repositories
+   services.AddSingleton<IOrderRepo, OrderRepo>();
+   // ...
 
-  return services;
+   return services;
 }
 ```
 
@@ -318,7 +318,7 @@ If a container is used for the tests, then the dependency can be _registered_ in
 ```cs
 var dbContextAccessor = FixedDbContextAccessor.Create(myDbContext);
 hostBuilder.ConfigureServices(services =>
-  services.AddSingleton<IDbContextAccessor<MyDbContext>>(dbContextAccessor));
+   services.AddSingleton<IDbContextAccessor<MyDbContext>>(dbContextAccessor));
 ```
 
 ### Unit Testing the Orchestrating Layer
@@ -359,83 +359,83 @@ It helps to remember that xUnit creates a separate instance of the test class fo
 /// </summary>
 public class OrderApplicationServiceTests : IDisposable
 {
-  /// <summary>
-  /// When SQLite disconnects, the in-memory database is deleted.
-  /// A fixed connection per test ensures that we can perform setup and assertions.
-  /// </summary>
-  private DbConnection Connection { get; } = new SqliteConnection("Filename=:memory:");
+   /// <summary>
+   /// When SQLite disconnects, the in-memory database is deleted.
+   /// A fixed connection per test ensures that we can perform setup and assertions.
+   /// </summary>
+   private DbConnection Connection { get; } = new SqliteConnection("Filename=:memory:");
 
-  /// <summary>
-  /// Used to run a test method in an IHost, with a DI container.
-  /// </summary>
-  private HostBuilder HostBuilder { get; } = new HostBuilder();
+   /// <summary>
+   /// Used to run a test method in an IHost, with a DI container.
+   /// </summary>
+   private HostBuilder HostBuilder { get; } = new HostBuilder();
 
-  /// <summary>
-  /// Lazily resolved, so that test methods can modify the container last-minute.
-  /// </summary>
-  private IHost Host => this._host ??= this.CreateHost();
-  private IHost? _host;
+   /// <summary>
+   /// Lazily resolved, so that test methods can modify the container last-minute.
+   /// </summary>
+   private IHost Host => this._host ??= this.CreateHost();
+   private IHost? _host;
 
-  /// <summary>
-  /// The subject under test.
-  /// </summary>
-  private OrderApplicationService ApplicationService =>
-    this.Host.Services.GetRequiredService<OrderApplicationService>();
+   /// <summary>
+   /// The subject under test.
+   /// </summary>
+   private OrderApplicationService ApplicationService =>
+      this.Host.Services.GetRequiredService<OrderApplicationService>();
 
-  /// <summary>
-  /// An instance of the DbContext, which many tests use for setup or assertions.
-  /// Although a different instance is provided than the one used in the subject under test,
-  /// the fixed DbConnection provides the same underlying data store.
-  /// </summary>
-  private OrderDbContext DbContext => this._dbContext ??=
-    this.Host.Services.GetRequiredService<IDbContextFactory<OrderDbContext>>().CreateDbContext();
-  private OrderDbContext? _dbContext;
+   /// <summary>
+   /// An instance of the DbContext, which many tests use for setup or assertions.
+   /// Although a different instance is provided than the one used in the subject under test,
+   /// the fixed DbConnection provides the same underlying data store.
+   /// </summary>
+   private OrderDbContext DbContext => this._dbContext ??=
+      this.Host.Services.GetRequiredService<IDbContextFactory<OrderDbContext>>().CreateDbContext();
+   private OrderDbContext? _dbContext;
 
-  /// <summary>
-  /// Test method setup.
-  /// </summary>
-  public OrderApplicationServiceTests()
-  {
-    this.Connection.Open();
+   /// <summary>
+   /// Test method setup.
+   /// </summary>
+   public OrderApplicationServiceTests()
+   {
+      this.Connection.Open();
 
-    // For some reason Entity Framework uses "first registration wins" instead of "last registration wins"
-    // So configure the test DbContext FIRST
-    this.HostBuilder.ConfigureServices(services =>
-      services.AddPooledDbContextFactory<OrderDbContext>(
-        context => context.UseSqlite(this.Connection)));
+      // For some reason Entity Framework uses "first registration wins" instead of "last registration wins"
+      // So configure the test DbContext FIRST
+      this.HostBuilder.ConfigureServices(services =>
+         services.AddPooledDbContextFactory<OrderDbContext>(
+            context => context.UseSqlite(this.Connection)));
 
-    // Call the method that registers the application's dependencies
-    this.HostBuilder.ConfigureServices(services => services.AddOrderApplication());
-  }
+      // Call the method that registers the application's dependencies
+      this.HostBuilder.ConfigureServices(services => services.AddOrderApplication());
+   }
 
-  /// <summary>
-  /// Test method teardown.
-  /// </summary>
-  public void Dispose()
-  {
-    this._dbContext?.Dispose();
-    this.Host.Dispose();
-    this.Connection.Dispose();
-  }
+   /// <summary>
+   /// Test method teardown.
+   /// </summary>
+   public void Dispose()
+   {
+      this._dbContext?.Dispose();
+      this.Host.Dispose();
+      this.Connection.Dispose();
+   }
 
-  private IHost CreateHost()
-  {
-    var host = this.HostBuilder.Build();
-    host.Services.GetRequiredService<IDbContextFactory<OrderDbContext>>().CreateDbContext()
-      .Database.EnsureCreated();
-    return host;
-  }
+   private IHost CreateHost()
+   {
+      var host = this.HostBuilder.Build();
+      host.Services.GetRequiredService<IDbContextFactory<OrderDbContext>>().CreateDbContext()
+         .Database.EnsureCreated();
+      return host;
+   }
 
-  /// <summary>
-  /// An example test method.
-  /// </summary>
-  [Fact]
-  public async Task GetOrder_WithNonexistentOrder_ShouldThrow()
-  {
-    await Assert.ThrowsAsync<KeyNotFoundException>(() => this.ApplicationService.GetOrder(orderId: 999));
-  }
-  
-  // ...
+   /// <summary>
+   /// An example test method.
+   /// </summary>
+   [Fact]
+   public async Task GetOrder_WithNonexistentOrder_ShouldThrow()
+   {
+      await Assert.ThrowsAsync<KeyNotFoundException>(() => this.ApplicationService.GetOrder(orderId: 999));
+   }
+   
+   // ...
 }
 ```
 
@@ -449,19 +449,19 @@ Additionally, when `ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure
 [InlineData(false)]
 [InlineData(true)]
 public async Task GetOrderShippingStatus_WithExistingOrder_ShouldReturnExpectedResult(
-  bool withConcurrencyException)
+   bool withConcurrencyException)
 {
-  // If withConcurrencyException=true,
-  // the first invocation of ExecuteInDbContextScopeAsync()
-  // will throw a DbUpdateConcurrencyException just before committing, and then retry
-  if (withConcurrencyException)
-    this.HostBuilder.ConfigureServices(services => services
-      .AddConcurrencyConflictDbContextProvider<MyDbContext>());
+   // If withConcurrencyException=true,
+   // the first invocation of ExecuteInDbContextScopeAsync()
+   // will throw a DbUpdateConcurrencyException just before committing, and then retry
+   if (withConcurrencyException)
+      this.HostBuilder.ConfigureServices(services => services
+         .AddConcurrencyConflictDbContextProvider<MyDbContext>());
 
-  var result = await this.ApplicationService.GetOrderShippingStatus(orderId: 1);
+   var result = await this.ApplicationService.GetOrderShippingStatus(orderId: 1);
 
-  // With or without retry, the result should be as expected
-  // Snip: assertions
+   // With or without retry, the result should be as expected
+   // Snip: assertions
 }
 ```
 
@@ -493,29 +493,29 @@ Note that the manual approach merely provides a DbContext and lets it be accesse
 ```cs
 public class MyApplicationService
 {
-  private IDbContextProvider<MyDbContext> DbContextProvider { get; }
-  private IMyRepository MyRepository { get; }
+   private IDbContextProvider<MyDbContext> DbContextProvider { get; }
+   private IMyRepository MyRepository { get; }
 
-  public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, IMyRepository myRepository)
-  {
-    // Inject an IDbContextProvider
-    this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));
-    
-    this.MyRepository = myRepository ?? throw new ArgumentNullException(nameof(myRepository));
-  }
+   public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, IMyRepository myRepository)
+   {
+      // Inject an IDbContextProvider
+      this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));
+      
+      this.MyRepository = myRepository ?? throw new ArgumentNullException(nameof(myRepository));
+   }
 
-  public async Task PerformSomeUnitOfWork()
-  {
-    // Make a DbContext available until the scope is disposed
-    await using var dbContextScope = this.DbContextProvider.CreateDbContextScope();
-    
-    // IDbContextAccessor can access the scoped DbContext
-    // It can do so from any number of invocations deep
-    await this.MyRepository.AddOrder(new Order());
-    
-    // If we made modifications, we should save them
-    // This example chooses to save here rather than in the repository, but either way works
-    await executionScope.DbContext.SaveChangesAsync();
-  }
+   public async Task PerformSomeUnitOfWork()
+   {
+      // Make a DbContext available until the scope is disposed
+      await using var dbContextScope = this.DbContextProvider.CreateDbContextScope();
+      
+      // IDbContextAccessor can access the scoped DbContext
+      // It can do so from any number of invocations deep
+      await this.MyRepository.AddOrder(new Order());
+      
+      // If we made modifications, we should save them
+      // This example chooses to save here rather than in the repository, but either way works
+      await executionScope.DbContext.SaveChangesAsync();
+   }
 }
 ```
