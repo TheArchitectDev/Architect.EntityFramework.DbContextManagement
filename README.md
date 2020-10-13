@@ -72,7 +72,7 @@ public class MyApplicationService
 
     public async Task PerformSomeUnitOfWork()
     {
-		// Provide a DbContext and execute a block of code within its scope
+        // Provide a DbContext and execute a block of code within its scope
         await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
         {
             // Until the end of this block, IDbContextAccessor can access the scoped DbContext
@@ -116,7 +116,7 @@ Additionally, the recommended [scoped execution](#recommended-use) (as opposed t
     - This behavior is [easily tested](#testing-retries).
 - We [avoid](#connection-resilience) the risk of data corruption that Entity Framework causes in case of a failure on commit.
     - When using a retrying execution strategy, Entity Framework would normally [retry even after a failure on commit](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency#transaction-commit-failure-and-the-idempotency-issue), which could lead to data corruption.
-	- This is not fixed in Entity Framework [yet](https://github.com/dotnet/efcore/issues/22904#issuecomment-705743508).
+    - This is not fixed in Entity Framework [yet](https://github.com/dotnet/efcore/issues/22904#issuecomment-705743508).
 - When using row versions or concurrency tokens for optimistic concurrency, retries can be configured to apply to concurrency conflicts as well, using `ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure`. By loading, modifying, and saving in a single code block, optimistic concurrency conflicts can be handled with zero effort.
     - This behavior is [easily tested](#testing-retries).
 
