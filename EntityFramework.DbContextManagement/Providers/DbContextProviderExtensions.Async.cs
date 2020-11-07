@@ -28,7 +28,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			// Local function that executes the given task and returns true
 			async Task<bool> ExecuteAndReturnTrue(IExecutionScope<TState> executionScope, CancellationToken cancellationToken)
 			{
-				await task(executionScope, cancellationToken);
+				await task(executionScope, cancellationToken).ConfigureAwait(false);
 				return true;
 			}
 		}

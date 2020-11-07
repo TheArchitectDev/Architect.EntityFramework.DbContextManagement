@@ -80,7 +80,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			return this.WrappedProvider.ExecuteInDbContextScopeAsync(scopeOption, state, cancellationToken, async (scope, ct) =>
 			{
 				var shouldThrow = this.ShouldThrow();
-				var result = await task(scope, ct);
+				var result = await task(scope, ct).ConfigureAwait(false);
 				ThrowConcurrencyException(shouldThrow);
 				return result;
 			});

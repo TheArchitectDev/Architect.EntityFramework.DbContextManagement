@@ -62,7 +62,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 			{
 				try
 				{
-					var result = await this.WrappedStrategy.ExecuteAsync(state, operation, verifySucceeded, cancellationToken);
+					var result = await this.WrappedStrategy.ExecuteAsync(state, operation, verifySucceeded, cancellationToken).ConfigureAwait(false);
 					return result;
 				}
 				catch (DbUpdateConcurrencyException) when (this.RetriesOnOptimisticConcurrencyFailure)

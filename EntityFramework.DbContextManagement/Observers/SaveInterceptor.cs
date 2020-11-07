@@ -29,9 +29,9 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 		public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
 		{
-			await this.WillSaveChanges(true, cancellationToken);
+			await this.WillSaveChanges(true, cancellationToken).ConfigureAwait(false);
 
-			return await base.SavingChangesAsync(eventData, result, cancellationToken);
+			return await base.SavingChangesAsync(eventData, result, cancellationToken).ConfigureAwait(false);
 		}
 
 		public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)

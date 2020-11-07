@@ -36,8 +36,8 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 			if (async)
 			{
 				await (isolationLevel is null
-					? this.DbContext.Database.BeginTransactionAsync(cancellationToken)
-					: this.DbContext.Database.BeginTransactionAsync(isolationLevel.Value, cancellationToken));
+					? this.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false)
+					: this.DbContext.Database.BeginTransactionAsync(isolationLevel.Value, cancellationToken).ConfigureAwait(false));
 			}
 			else
 			{
@@ -72,7 +72,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 			if (this.DbContext.Database.CurrentTransaction is null) return false;
 
-			await this.DbContext.Database.CurrentTransaction.CommitAsync(cancellationToken);
+			await this.DbContext.Database.CurrentTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
 			System.Diagnostics.Debug.Assert(this.DbContext.Database.CurrentTransaction is null, "The DatabaseFacade should have unset its own transaction.");
 
@@ -106,7 +106,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 			if (this.DbContext.Database.CurrentTransaction is null) return false;
 
-			if (async) await this.DbContext.Database.CurrentTransaction.RollbackAsync(cancellationToken);
+			if (async) await this.DbContext.Database.CurrentTransaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
 			else this.DbContext.Database.CurrentTransaction.Rollback();
 
 			System.Diagnostics.Debug.Assert(this.DbContext.Database.CurrentTransaction is null, "The DatabaseFacade should have unset its own transaction.");
@@ -130,7 +130,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 			// Throw whenever any further connectivity is attempted
 			this.DbContextObserver.MarkAsTransactionAborted();
 
-			var didRollBack = await this.TryRollBackTransactionAsync(async, cancellationToken);
+			var didRollBack = await this.TryRollBackTransactionAsync(async, cancellationToken).ConfigureAwait(false);
 			return didRollBack;
 		}
 

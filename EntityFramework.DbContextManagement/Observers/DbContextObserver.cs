@@ -124,7 +124,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 				// Pretend that something is being saved (for example, this allows a transaction to be started)
 				var initialTransaction = this.DbContext.Database.CurrentTransaction;
 
-				await this.WillSaveChanges(async, cancellationToken);
+				await this.WillSaveChanges(async, cancellationToken).ConfigureAwait(false);
 
 				var newTransaction = this.DbContext.Database.CurrentTransaction;
 

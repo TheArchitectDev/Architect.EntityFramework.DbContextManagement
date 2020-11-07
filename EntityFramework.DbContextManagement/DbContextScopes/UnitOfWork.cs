@@ -147,7 +147,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 			if (!this.TrySetDisposed())
 				return; // Already disposed
 
-			await this.DisposeCore(async: true);
+			await this.DisposeCore(async: true).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -178,7 +178,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 				try
 				{
 					// Disposes DbContext.Database.CurrentTransaction as well
-					if (async) await this._dbContext.DisposeAsync();
+					if (async) await this._dbContext.DisposeAsync().ConfigureAwait(false);
 					else this._dbContext.Dispose();
 				}
 				catch (Exception e)

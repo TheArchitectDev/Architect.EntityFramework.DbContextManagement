@@ -62,7 +62,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 				var unitOfWork = getUnitOfWork(dbContextScope);
 
 				if (dbContextScope.IsNested)
-					return await PerformAsPartOfOuterScope(async, dbContextScope, unitOfWork, state, cancellationToken, task);
+					return await PerformAsPartOfOuterScope(async, dbContextScope, unitOfWork, state, cancellationToken, task).ConfigureAwait(false);
 
 				unitOfWork.PromoteToMode(UnitOfWorkMode.ScopedExecution);
 
@@ -72,13 +72,13 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 				return async
 					? await executionStrategy.ExecuteAsync(
-						ct => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, ct, task), cancellationToken)
+						ct => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, ct, task), cancellationToken).ConfigureAwait(false)
 					: executionStrategy.Execute(
 						() => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, cancellationToken: default, task).RequireCompleted());
 			}
 			finally
 			{
-				if (async) await dbContextScope.DisposeAsync();
+				if (async) await dbContextScope.DisposeAsync().ConfigureAwait(false);
 				else dbContextScope.Dispose();
 			}
 		}
@@ -95,7 +95,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 			// Simply execute the work as part of the overarching work
 			try
 			{
-				return await task(executionScope, cancellationToken);
+				return await task(executionScope, cancellationToken).ConfigureAwait(false);
 			}
 			catch
 			{
@@ -104,7 +104,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 			}
 			finally
 			{
-				if (async) await executionScope.DisposeAsync();
+				if (async) await executionScope.DisposeAsync().ConfigureAwait(false);
 				else executionScope.Dispose();
 			}
 		}
@@ -128,7 +128,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 				try
 				{
 					// #TODO: Test retries with SQL Server
-					result = await task(executionScope, cancellationToken);
+					result = await task(executionScope, cancellationToken).ConfigureAwait(false);
 
 					isExecutionScopeCompleted = executionScope.IsCompleted;
 				}
@@ -139,7 +139,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 				}
 				finally
 				{
-					if (async) await executionScope.DisposeAsync();
+					if (async) await executionScope.DisposeAsync().ConfigureAwait(false);
 					else executionScope.Dispose();
 				}
 
@@ -148,7 +148,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 				{
 					try
 					{
-						await unitOfWork.TryCommitTransactionAsync(async, cancellationToken);
+						await unitOfWork.TryCommitTransactionAsync(async, cancellationToken).ConfigureAwait(false);
 					}
 					catch (Exception e) when (options.AvoidFailureOnCommitRetries) // #TODO: Test, particularly that transaction is now GONE! It must be gone.
 					{

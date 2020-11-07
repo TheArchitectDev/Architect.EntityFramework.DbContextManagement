@@ -41,9 +41,9 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 			CancellationToken cancellationToken = default)
 		{
 			// #TODO: Test if this is inadvertently hit on first query, when using SQL Server
-			await this.WillExecuteNonQuery(true, command, cancellationToken);
+			await this.WillExecuteNonQuery(true, command, cancellationToken).ConfigureAwait(false);
 
-			return await base.NonQueryExecutingAsync(command, eventData, result, cancellationToken);
+			return await base.NonQueryExecutingAsync(command, eventData, result, cancellationToken).ConfigureAwait(false);
 		}
 	}
 }
