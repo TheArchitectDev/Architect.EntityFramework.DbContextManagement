@@ -112,7 +112,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		{
 			return TransactionalStrategyExecutor.ExecuteInDbContextScopeAsync(this as IDbContextProvider<TContext>, scopeOption, state, default, ExecuteSynchronously,
 				async: false, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false)
-				.AssumeSynchronous();
+				.RequireCompleted();
 
 			// Local function that executes the given task and returns a completed task
 			Task<TResult> ExecuteSynchronously(IExecutionScope<TState> executionScope, CancellationToken _)

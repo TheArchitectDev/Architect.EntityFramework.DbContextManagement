@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.DbContextScopes;
 using Architect.EntityFramework.DbContextManagement.ExecutionScopes;
@@ -20,7 +21,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 			TState state, Func<IExecutionScope<TState>, TResult> task)
 		{
 			return ExecuteInDbContextScopeAsync(provider, scopeOption, state, cancellationToken: default, ExecuteSynchronously, async: false, GetUnitOfWorkFromDbContextScope)
-				.AssumeSynchronous();
+				.RequireCompleted();
 
 			// Local function that executes the given task and returns a completed task
 			Task<TResult> ExecuteSynchronously(IExecutionScope<TState> executionScope, CancellationToken _)
@@ -44,9 +45,11 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task,
 			bool async, Func<DbContextScope, UnitOfWork> getUnitOfWork, bool shouldClearChangeTrackerOnRetry = true)
 		{
-			// #TODO: Test if we should hide Transaction.Current if there is one!!
-
 			if (provider is null) throw new ArgumentNullException(nameof(provider));
+
+			// #TODO: Consider if we should hide Transaction.Current if there is one!!
+			if (Transaction.Current != null)
+				throw new InvalidOperationException("An ambient transaction has been detected. Scoped execution does not support ambient transactions.");
 
 			// "Note that any contexts should be constructed within the code block to be retried. This ensures that we are starting with a clean state for each retry."
 			// https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/retry-logic
@@ -71,7 +74,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 					? await executionStrategy.ExecuteAsync(
 						ct => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, ct, task), cancellationToken)
 					: executionStrategy.Execute(
-						() => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, cancellationToken: default, task).AssumeSynchronous());
+						() => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, cancellationToken: default, task).RequireCompleted());
 			}
 			finally
 			{

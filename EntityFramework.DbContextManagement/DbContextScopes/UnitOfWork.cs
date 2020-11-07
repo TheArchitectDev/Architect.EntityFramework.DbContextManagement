@@ -139,7 +139,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 			if (!this.TrySetDisposed())
 				return; // Already disposed
 
-			this.DisposeCore(async: false).AssumeSynchronous();
+			this.DisposeCore(async: false).RequireCompleted();
 		}
 
 		public async ValueTask DisposeAsync()

@@ -1,14 +1,113 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.EntityFramework.DbContextManagement
 {
+	// #TODO: See if we can use await task.AssumeSynchronous(!async) (with just an assertion) on the intermediate levels, and task.RequireCompleted() at the threshold
+
 	/// <summary>
 	/// Provides extensions on <see cref="Task"/> and related types.
 	/// </summary>
 	internal static class TaskExtensions
 	{
+		/// <summary>
+		/// <para>
+		/// If the given task is faulted, it is awaited, so that its exception is thrown.
+		/// </para>
+		/// <para>
+		/// Otherwise, an exception is thrown to indicate that the task should have been completed.
+		/// </para>
+		/// </summary>
+		private static T HandleIncompleteTask<T>(Task task)
+		{
+			switch (task.Status)
+			{
+				case TaskStatus.Faulted:
+					task.GetAwaiter().GetResult(); // Allow exceptions to be thrown
+					return default!; // Never reached
+				default:
+					throw new Exception("The task should have completed synchronously.");
+			}
+		}
+
+		/// <summary>
+		/// <para>
+		/// Throws if the given task is not completed.
+		/// </para>
+		/// <para>
+		/// If the task contains an exception, it is thrown.
+		/// </para>
+		/// <para>
+		/// Used to implement synchronous overloads through a task-based implementation.
+		/// </para>
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void RequireCompleted(this Task completedTask)
+		{
+			if (completedTask.IsCompletedSuccessfully) return;
+			HandleIncompleteTask<bool>(completedTask);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Throws if the given task is not completed.
+		/// </para>
+		/// <para>
+		/// If the task contains an exception, it is thrown.
+		/// </para>
+		/// <para>
+		/// Used to implement synchronous overloads through a task-based implementation.
+		/// </para>
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void RequireCompleted(this ValueTask t)
+		{
+			if (t.IsCompletedSuccessfully) return;
+			HandleIncompleteTask<bool>(t.AsTask());
+		}
+
+		/// <summary>
+		/// <para>
+		/// Throws if the given task is not completed.
+		/// </para>
+		/// <para>
+		/// Returns the task's result.
+		/// If the task contains an exception, it is thrown.
+		/// </para>
+		/// <para>
+		/// Used to implement synchronous overloads through a task-based implementation.
+		/// </para>
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T RequireCompleted<T>(this Task<T> completedTask)
+		{
+			return completedTask.IsCompletedSuccessfully
+				? completedTask.Result
+				: HandleIncompleteTask<T>(completedTask);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Throws if the given task is not completed.
+		/// </para>
+		/// <para>
+		/// Returns the task's result.
+		/// If the task contains an exception, it is thrown.
+		/// </para>
+		/// <para>
+		/// Used to implement synchronous overloads through a task-based implementation.
+		/// </para>
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T RequireCompleted<T>(this ValueTask<T> completedTask)
+		{
+			return completedTask.IsCompletedSuccessfully
+				? completedTask.Result
+				: HandleIncompleteTask<T>(completedTask.AsTask());
+		}
+
 		/// <summary>
 		/// <para>
 		/// Performs a debug assertion that the given task is completed.
@@ -17,10 +116,12 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// Used to implement synchronous overloads through a task-based implementation.
 		/// </para>
 		/// </summary>
+		/// <param name="synchronous">If true, an assertion is made that the task is completed.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void AssumeSynchronous(this Task completedTask)
+		public static Task AssumeSynchronous(this Task task, bool synchronous)
 		{
-			System.Diagnostics.Debug.Assert(completedTask.IsCompleted, "This task should have completed synchronously.");
+			System.Diagnostics.Debug.Assert(!synchronous || task.IsCompleted, "This task should have completed synchronously.");
+			return task;
 		}
 		/// <summary>
 		/// <para>
@@ -30,10 +131,12 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// Used to implement synchronous overloads through a task-based implementation.
 		/// </para>
 		/// </summary>
+		/// <param name="synchronous">If true, an assertion is made that the task is completed.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void AssumeSynchronous(this ValueTask completedTask)
+		public static ValueTask AssumeSynchronous(this ValueTask task, bool synchronous)
 		{
-			System.Diagnostics.Debug.Assert(completedTask.IsCompleted, "This task should have completed synchronously.");
+			System.Diagnostics.Debug.Assert(!synchronous || task.IsCompleted, "This task should have completed synchronously.");
+			return task;
 		}
 
 		/// <summary>
@@ -43,13 +146,29 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// <para>
 		/// Used to implement synchronous overloads through a task-based implementation.
 		/// </para>
+		/// <param name="synchronous">If true, an assertion is made that the task is completed.</param>
 		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static T AssumeSynchronous<T>(this Task<T> completedTask)
+		public static Task<T> AssumeSynchronous<T>(this Task<T> task, bool synchronous)
 		{
-			System.Diagnostics.Debug.Assert(completedTask.IsCompleted, "This task should have completed synchronously.");
+			System.Diagnostics.Debug.Assert(!synchronous || task.IsCompleted, "This task should have completed synchronously.");
+			return task;
+		}
 
-			return completedTask.Result;
+		/// <summary>
+		/// <para>
+		/// Performs a debug assertion that the given task is completed, and returns its result.
+		/// </para>
+		/// <para>
+		/// Used to implement synchronous overloads through a task-based implementation.
+		/// </para>
+		/// <param name="synchronous">If true, an assertion is made that the task is completed.</param>
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ValueTask<T> AssumeSynchronous<T>(this ValueTask<T> task, bool synchronous)
+		{
+			System.Diagnostics.Debug.Assert(!synchronous || task.IsCompleted, "This task should have completed synchronously.");
+			return task;
 		}
 	}
 }

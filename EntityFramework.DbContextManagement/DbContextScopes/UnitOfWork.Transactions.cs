@@ -1,5 +1,7 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
@@ -9,7 +11,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		internal override bool TryStartTransaction()
 		{
 			return this.TryRollBackTransactionAsync(async: false, cancellationToken: default)
-				.AssumeSynchronous();
+				.RequireCompleted();
 		}
 
 		internal override Task<bool> TryStartTransactionAsync(CancellationToken cancellationToken = default)
@@ -24,6 +26,10 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 			using var exclusiveLock = this.GetLock();
 
 			if (this.DbContext.Database.CurrentTransaction != null) return false;
+
+			// #TODO: Consider if we should hide Transaction.Current if there is one!!
+			if (Transaction.Current != null)
+				throw new InvalidOperationException("An ambient transaction has been detected. Scoped execution does not support ambient transactions.");
 
 			var isolationLevel = this.IsolationLevel;
 
@@ -84,7 +90,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		internal override bool TryRollBackTransaction()
 		{
 			return this.TryRollBackTransactionAsync(async: false, cancellationToken: default)
-				.AssumeSynchronous();
+				.RequireCompleted();
 		}
 
 		internal override Task<bool> TryRollBackTransactionAsync(CancellationToken cancellationToken)
@@ -111,7 +117,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		internal override bool TryRollBackTransactionAndInvalidate()
 		{
 			return this.TryRollBackTransactionAndInvalidateAsync(async: false, cancellationToken: default)
-				.AssumeSynchronous();
+				.RequireCompleted();
 		}
 
 		internal override Task<bool> TryRollBackTransactionAndInvalidateAsync(CancellationToken cancellationToken)

@@ -32,7 +32,7 @@ namespace Architect.EntityFramework.DbContextManagement
 				return true;
 			}
 		}
-		/*
+
 		public static Task<TResult> ExecuteInDbContextScopeAsync<TDbContext, TState, TResult>(this IDbContextProvider<TDbContext> provider,
 			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{
@@ -44,7 +44,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		{
 			return provider.ExecuteInDbContextScopeAsync(provider.Options.DefaultScopeOption, state, cancellationToken, task);
 		}
-		*/
+
 
 		#endregion
 

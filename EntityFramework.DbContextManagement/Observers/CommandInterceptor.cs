@@ -32,7 +32,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 		public override InterceptionResult<int> NonQueryExecuting(DbCommand command, CommandEventData eventData, InterceptionResult<int> result)
 		{
 			// #TODO: Test if this is inadvertently hit on first query, when using SQL Server
-			this.WillExecuteNonQuery(false, command, default).AssumeSynchronous();
+			this.WillExecuteNonQuery(false, command, default).RequireCompleted();
 
 			return base.NonQueryExecuting(command, eventData, result);
 		}
