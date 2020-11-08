@@ -142,12 +142,12 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 			this.DisposeCore(async: false).RequireCompleted();
 		}
 
-		public async ValueTask DisposeAsync()
+		public ValueTask DisposeAsync()
 		{
 			if (!this.TrySetDisposed())
-				return; // Already disposed
+				return new ValueTask(Task.CompletedTask); // Already disposed
 
-			await this.DisposeCore(async: true).ConfigureAwait(false);
+			return this.DisposeCore(async: true);
 		}
 
 		/// <summary>
