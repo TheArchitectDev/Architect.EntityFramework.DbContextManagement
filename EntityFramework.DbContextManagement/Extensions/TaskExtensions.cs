@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 // ReSharper disable once CheckNamespace
 namespace Architect.EntityFramework.DbContextManagement
 {
-	// #TODO: See if we can use await task.AssumeSynchronous(!async) (with just an assertion) on the intermediate levels, and task.RequireCompleted() at the threshold
-
 	/// <summary>
 	/// Provides extensions on <see cref="Task"/> and related types.
 	/// </summary>
