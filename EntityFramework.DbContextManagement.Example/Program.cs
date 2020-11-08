@@ -14,13 +14,6 @@ using Microsoft.Extensions.Hosting;
 
 namespace EntityFramework.DbContextManagement.Example
 {
-	/// <summary>
-	/// Requirements:
-	/// - Be agnostic of what technology it is used in.
-	/// - Allow database transaction.
-	/// - Allow built-in retry strategies (especially to make "serverless" database plans work, where the database may need to be woken and the first query may fail).
-	/// - Perform reading with the same DbContext as saving (to benefit from change tracking [#TODO: link], to allow row versioning, and to make retries robust).
-	/// </summary>
 	class Program
 	{
 		[MethodImpl(MethodImplOptions.NoInlining)]
