@@ -10,7 +10,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 	{
 		internal override bool TryStartTransaction()
 		{
-			return this.TryRollBackTransactionAsync(async: false, cancellationToken: default)
+			return this.TryStartTransactionAsync(async: false, cancellationToken: default)
 				.RequireCompleted();
 		}
 
@@ -36,8 +36,9 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 			if (async)
 			{
 				await (isolationLevel is null
-					? this.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false)
-					: this.DbContext.Database.BeginTransactionAsync(isolationLevel.Value, cancellationToken).ConfigureAwait(false));
+					? this.DbContext.Database.BeginTransactionAsync(cancellationToken)
+					: this.DbContext.Database.BeginTransactionAsync(isolationLevel.Value, cancellationToken))
+					.ConfigureAwait(false);
 			}
 			else
 			{
@@ -51,20 +52,16 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 		internal override bool TryCommitTransaction()
 		{
-			if (this.DbContext.Database.CurrentTransaction is null) return false;
-
-			using var exclusiveLock = this.GetLock();
-
-			if (this.DbContext.Database.CurrentTransaction is null) return false;
-
-			this.DbContext.Database.CurrentTransaction.Commit();
-
-			System.Diagnostics.Debug.Assert(this.DbContext.Database.CurrentTransaction is null, "The DatabaseFacade should have unset its own transaction.");
-
-			return true;
+			return this.TryCommitTransactionAsync(async: false, cancellationToken: default)
+				.RequireCompleted();
 		}
 
-		internal override async Task<bool> TryCommitTransactionAsync(CancellationToken cancellationToken = default)
+		internal override Task<bool> TryCommitTransactionAsync(CancellationToken cancellationToken = default)
+		{
+			return this.TryCommitTransactionAsync(async: true, cancellationToken);
+		}
+
+		internal override async Task<bool> TryCommitTransactionAsync(bool async, CancellationToken cancellationToken = default)
 		{
 			if (this.DbContext.Database.CurrentTransaction is null) return false;
 
@@ -72,19 +69,12 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 			if (this.DbContext.Database.CurrentTransaction is null) return false;
 
-			await this.DbContext.Database.CurrentTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+			if (async) await this.DbContext.Database.CurrentTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+			else this.DbContext.Database.CurrentTransaction.Commit();
 
 			System.Diagnostics.Debug.Assert(this.DbContext.Database.CurrentTransaction is null, "The DatabaseFacade should have unset its own transaction.");
 
 			return true;
-		}
-
-		internal override Task<bool> TryCommitTransactionAsync(bool async, CancellationToken cancellationToken = default)
-		{
-			if (async) return this.TryCommitTransactionAsync(cancellationToken);
-
-			var result = this.TryCommitTransaction();
-			return Task.FromResult(result);
 		}
 
 		internal override bool TryRollBackTransaction()
