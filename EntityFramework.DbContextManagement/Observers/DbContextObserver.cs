@@ -128,6 +128,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 				var newTransaction = this.DbContext.Database.CurrentTransaction;
 
+				// If saving started a new transaction, make sure that the current command enlists in that transaction
 				if (newTransaction != initialTransaction)
 					command.Transaction = newTransaction.GetDbTransaction();
 			}
