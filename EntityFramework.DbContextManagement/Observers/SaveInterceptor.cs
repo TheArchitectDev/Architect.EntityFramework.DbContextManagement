@@ -21,7 +21,6 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 		public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
 		{
-			// #TODO: Find sync-over-async places without AssumeSynchronous (because exceptions are getting ignored!!)
 			this.WillSaveChanges(false, default).RequireCompleted();
 
 			return base.SavingChanges(eventData, result);
