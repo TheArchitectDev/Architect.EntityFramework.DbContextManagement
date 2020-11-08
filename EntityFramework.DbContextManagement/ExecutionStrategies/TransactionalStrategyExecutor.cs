@@ -47,9 +47,9 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 		{
 			if (provider is null) throw new ArgumentNullException(nameof(provider));
 
-			// #TODO: Consider if we should hide Transaction.Current if there is one!!
+			// TODO Consideration: We could hide the ambient transaction if there is one
 			if (Transaction.Current != null)
-				throw new InvalidOperationException("An ambient transaction has been detected. Scoped execution does not support ambient transactions.");
+				throw new InvalidOperationException("An ambient TransactionScope has been detected. DbContextScope was nog designed to support TransactionScopes.");
 
 			// "Note that any contexts should be constructed within the code block to be retried. This ensures that we are starting with a clean state for each retry."
 			// https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/retry-logic

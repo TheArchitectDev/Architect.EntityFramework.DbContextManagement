@@ -27,9 +27,9 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 			if (this.DbContext.Database.CurrentTransaction != null) return false;
 
-			// #TODO: Consider if we should hide Transaction.Current if there is one!!
+			// TODO Consideration: We could hide the ambient transaction if there is one
 			if (Transaction.Current != null)
-				throw new InvalidOperationException("An ambient transaction has been detected. Scoped execution does not support ambient transactions.");
+				throw new InvalidOperationException("An ambient TransactionScope has been detected. DbContextScope was nog designed to support TransactionScopes.");
 
 			var isolationLevel = this.IsolationLevel;
 
