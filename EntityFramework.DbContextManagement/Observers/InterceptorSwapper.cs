@@ -145,7 +145,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 							if (aggregator is null)
 								throw new Exception($"Field {theInterceptors.GetType().Name}._aggregators contained a null aggregator for {typeof(TInterceptor).Name}.");
 
-							if (!(aggregator is InterceptorAggregator<TInterceptor> typedAggregator))
+							if (aggregator is not InterceptorAggregator<TInterceptor> typedAggregator)
 								throw new Exception($"Field {theInterceptors.GetType().Name}._aggregators contained an aggregator for {typeof(TInterceptor).Name} of unexpected type {aggregator.GetType().Name}.");
 
 							// Compile a fast expression tree
