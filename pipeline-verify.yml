@@ -1,5 +1,5 @@
-#TODO: Trigger only on PR, from GitHub.
-trigger:
+trigger: none
+pr:
 - master
 
 pool:
