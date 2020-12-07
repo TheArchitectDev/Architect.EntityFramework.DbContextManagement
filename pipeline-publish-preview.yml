@@ -1,5 +1,6 @@
-#TODO: Trigger preview publish on master (i.e. when a PR is completed)
-trigger: none
+trigger:
+- master
+pr: none
 
 pool:
   vmImage: 'windows-latest'
