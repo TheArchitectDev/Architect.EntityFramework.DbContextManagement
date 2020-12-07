@@ -9,12 +9,12 @@ namespace Architect.EntityFramework.DbContextManagement
 	/// Provides an ambient <see cref="DbContextScope"/>, code in whose scope can access the <see cref="DbContext"/> through <see cref="IDbContextAccessor{TDbContext}"/>.
 	/// </para>
 	/// <para>
-	/// <typeparamref name="TContext"/> may be a <see cref="DbContext"/> type, or a type used to represent one.
+	/// <typeparamref name="TDbContext"/> may be a <see cref="DbContext"/> type, or a type used to represent one.
 	/// Such an indirect representation can be registered with <see cref="DbContextScopeExtensions.AddDbContextScope{TDbContextRepresentation, TDbContext}
 	/// (Microsoft.Extensions.DependencyInjection.IServiceCollection, System.Action{DbContextScopeExtensions.Options{TDbContext}}?)"/>.
 	/// </para>
 	/// </summary>
-	public partial interface IDbContextProvider<TContext>
+	public partial interface IDbContextProvider<TDbContext>
 	{
 		/// <summary>
 		/// <para>
