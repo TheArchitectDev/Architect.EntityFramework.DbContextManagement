@@ -17,21 +17,21 @@ steps:
       **/*.csproj
       !**/*Tests*.csproj
 
-#- task: DotNetCoreCLI@2
-#  displayName: 'DotNet Build'
-#  inputs:
-#    command: 'build'
-#    arguments: '/WarnAsError --no-restore --configuration Release'
-#    projects: |
-#      **/*.csproj
-#
-#- task: DotNetCoreCLI@2
-#  displayName: 'DotNet Test'
-#  inputs:
-#    command: 'test'
-#    arguments: '--no-restore --no-build --configuration Release'
-#    projects: |
-#      **/*Tests*.csproj
+- task: DotNetCoreCLI@2
+  displayName: 'DotNet Build'
+  inputs:
+    command: 'build'
+    arguments: '/WarnAsError --no-restore --configuration Release'
+    projects: |
+      **/*.csproj
+
+- task: DotNetCoreCLI@2
+  displayName: 'DotNet Test'
+  inputs:
+    command: 'test'
+    arguments: '--no-restore --no-build --configuration Release'
+    projects: |
+      **/*Tests*.csproj
 
 - script: dotnet pack $(Build.SourcesDirectory)/EntityFramework.DbContextManagement/EntityFramework.DbContextManagement.csproj --no-restore --configuration Release -o $(Build.ArtifactStagingDirectory)
   displayName: 'DotNet Pack'
