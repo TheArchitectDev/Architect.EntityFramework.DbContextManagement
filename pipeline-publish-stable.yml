@@ -33,7 +33,7 @@ steps:
     projects: |
       **/*Tests*.csproj
 
-- script: dotnet pack $(Build.SourcesDirectory)/EntityFramework.DbContextManagement/EntityFramework.DbContextManagement.csproj --no-restore --configuration Release -o $(Build.ArtifactStagingDirectory)
+- script: dotnet pack $(Build.SourcesDirectory)/EntityFramework.DbContextManagement/EntityFramework.DbContextManagement.csproj /WarnAsError --no-restore --configuration Release -o $(Build.ArtifactStagingDirectory)
   displayName: 'DotNet Pack'
 
 # #TODO: Re-enable
