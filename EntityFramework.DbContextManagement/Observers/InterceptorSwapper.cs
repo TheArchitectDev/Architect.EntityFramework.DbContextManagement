@@ -20,7 +20,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 	internal sealed class InterceptorSwapper<TInterceptor> : IDisposable
 		where TInterceptor : class, IInterceptor
 	{
-		private TInterceptor OriginalInterceptor { get; }
+		private TInterceptor? OriginalInterceptor { get; }
 		private InterceptorAggregator<TInterceptor> Aggregator { get; }
 
 		private DbContext DbContext { get; }
