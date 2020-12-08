@@ -2,7 +2,6 @@
 
 namespace Architect.EntityFramework.DbContextManagement.Providers
 {
-	// #TODO: Remove?
 	/// <summary>
 	/// A type used to represent the <see cref="IDbContextProvider{TContext}"/> a second time.
 	/// This allows <see cref="DbContextProviderWrapper{TContext, TDbContext}"/> to inject an <see cref="IInternalDbContextProvider{TDbContext}"/>.
