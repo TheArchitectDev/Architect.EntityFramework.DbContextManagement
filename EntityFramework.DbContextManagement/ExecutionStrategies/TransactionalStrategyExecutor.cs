@@ -38,7 +38,6 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 			return ExecuteInDbContextScopeAsync(provider, scopeOption, state, cancellationToken, task, async: true, GetUnitOfWorkFromDbContextScope);
 		}
 
-		// #TODO: Remove state?
 		/// <param name="async">If false, then the given <paramref name="task"/> MUST complete synchronously.</param>
 		internal static async Task<TResult> ExecuteInDbContextScopeAsync<TContext, TState, TResult>(IDbContextProvider<TContext> provider,
 			AmbientScopeOption scopeOption,
