@@ -10,6 +10,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 // ReSharper disable once CheckNamespace
 namespace Architect.EntityFramework.DbContextManagement
 {
+	// This partial provides default implementations
+	// Consisting almost entirely of default implementations makes it simple to implement the interface, controlling only how the DbContextScope is provided
+	// The default implementations can still be 'overridden', although this is ugly and easy to get wrong
 	public partial interface IDbContextProvider<TDbContext>
 	{
 		// #TODO: Perhaps we should abstract all this away in a class, so that we can use virtual methods instead of all this trouble
