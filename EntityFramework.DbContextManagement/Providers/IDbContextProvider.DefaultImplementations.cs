@@ -33,7 +33,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		}
 
 		/// <summary>
-		/// Returns the given <see cref="IExecutionStrategy"/>, potentially wrapped in another strategy.
+		/// Returns the given <see cref="IExecutionStrategy"/>, potentially wrapped in another strategy, depending on the <see cref="Options"/>.
 		/// </summary>
 		protected IExecutionStrategy CreateWrappingExecutionStrategy(IExecutionStrategy baseExecutionStrategy)
 		{

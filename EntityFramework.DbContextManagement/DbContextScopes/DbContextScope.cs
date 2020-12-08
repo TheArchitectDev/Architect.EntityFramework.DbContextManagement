@@ -101,7 +101,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// Returns the current ambient <see cref="DbContextScope{TDbContext}"/>, or throws an <see cref="InvalidOperationException"/> if there is none.
 		/// </summary>
 		public static DbContextScope<TDbContext> Current => GetAmbientScope(considerDefaultScope: false) as DbContextScope<TDbContext> ??
-			throw new InvalidOperationException("No ambient DbContext was registered.");
+			throw new InvalidOperationException("No ambient DbContext was provided.");
 
 		/// <summary>
 		/// Returns the current ambient <typeparamref name="TDbContext"/>, or throws an <see cref="InvalidOperationException"/> if there is none.
