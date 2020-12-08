@@ -193,7 +193,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		}
 
 		/// <summary>
-		/// Returns the value of the <see cref="_dbContext"/> field, or an instance newly assigned to it if it was null.
+		/// Returns the value of the <see cref="_dbContext"/> field, after first populating it if it was null.
 		/// </summary>
 		private TDbContext AcquireDbContext()
 		{
@@ -208,7 +208,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		}
 
 		/// <summary>
-		/// Returns the value of the <see cref="_dbContextObserver"/> field, or an instance newly assigned to it if it was null.
+		/// Returns the value of the <see cref="_dbContextObserver"/> field, after first populating it if it was null.
 		/// </summary>
 		private DbContextObserver AcquireDbContextObserver()
 		{
