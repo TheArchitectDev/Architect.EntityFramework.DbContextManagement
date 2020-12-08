@@ -111,8 +111,6 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 	internal sealed partial class UnitOfWork<TDbContext> : UnitOfWork, IAsyncDisposable, IDisposable
 		where TDbContext : DbContext
 	{
-		// #TODO: Reconsider thread-safety and disposed object checks
-
 		/// <summary>
 		/// Lazily instantiated.
 		/// </summary>
