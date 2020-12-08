@@ -153,7 +153,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		/// </summary>
 		private async ValueTask DisposeCore(bool async)
 		{
-			ImmutableList<Exception>? exceptions = null;
+			var exceptions = ImmutableList<Exception>.Empty;
 
 			if (this._dbContextObserver != null)
 			{
@@ -163,7 +163,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 				}
 				catch (Exception e)
 				{
-					exceptions = (exceptions ?? ImmutableList<Exception>.Empty).Add(e);
+					exceptions = exceptions.Add(e);
 				}
 				finally
 				{
@@ -181,7 +181,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 				}
 				catch (Exception e)
 				{
-					exceptions = (exceptions ?? ImmutableList<Exception>.Empty).Add(e);
+					exceptions = exceptions.Add(e);
 				}
 				finally
 				{
@@ -189,7 +189,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 				}
 			}
 
-			if (exceptions != null) throw new AggregateException(exceptions);
+			if (exceptions != ImmutableList<Exception>.Empty) throw new AggregateException(exceptions);
 		}
 
 		/// <summary>
