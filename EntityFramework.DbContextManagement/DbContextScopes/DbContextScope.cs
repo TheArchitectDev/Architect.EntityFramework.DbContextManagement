@@ -38,7 +38,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// Creates a new ambiently accessible instance.
 		/// It should be disposed with the help of a using statement.
 		/// </summary>
-		internal static DbContextScope<TDbContext> Create<TDbContext>(
+		public static DbContextScope<TDbContext> Create<TDbContext>(
 			IDbContextFactory<TDbContext> dbContextFactory,
 			AmbientScopeOption scopeOption)
 			where TDbContext : DbContext
@@ -50,7 +50,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// Creates a new ambiently accessible instance.
 		/// It should be disposed with the help of a using statement.
 		/// </summary>
-		internal static DbContextScope<TDbContext> Create<TDbContext>(
+		public static DbContextScope<TDbContext> Create<TDbContext>(
 			Func<TDbContext> dbContextFactory,
 			AmbientScopeOption scopeOption)
 			where TDbContext : DbContext
