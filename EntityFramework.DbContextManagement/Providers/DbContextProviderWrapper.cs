@@ -16,19 +16,19 @@ namespace Architect.EntityFramework.DbContextManagement.Providers
 	/// This makes it possible to let <typeparamref name="TContext"/> be an abstraction that represents <typeparamref name="TDbContext"/>, so that <typeparamref name="TDbContext"/> can remain internal.
 	/// </para>
 	/// </summary>
-	internal sealed class DbContextProviderWrapper<TContext, TDbContext> : IDbContextProvider<TContext>
+	internal sealed class DbContextProviderWrapper<TContext, TDbContext> : DbContextProvider<TContext, TDbContext>
 		where TDbContext : DbContext
 	{
 		private IInternalDbContextProvider<TDbContext> Provider { get; }
 
-		public DbContextScopeOptions Options => this.Provider.Options;
+		public override DbContextScopeOptions Options => this.Provider.Options;
 
 		public DbContextProviderWrapper(IInternalDbContextProvider<TDbContext> provider)
 		{
 			this.Provider = provider ?? throw new ArgumentNullException(nameof(provider));
 		}
 
-		public DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
+		public override DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
 		{
 			return this.Provider.CreateDbContextScope(scopeOption);
 		}

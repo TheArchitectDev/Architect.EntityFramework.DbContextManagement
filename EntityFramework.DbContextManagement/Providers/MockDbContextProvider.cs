@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.Dummies;
 using Architect.EntityFramework.DbContextManagement.ExecutionStrategies;
-using Architect.EntityFramework.DbContextManagement.Providers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -18,7 +17,7 @@ namespace Architect.EntityFramework.DbContextManagement
 	/// A mock implementation to provide <see cref="DbContextScope"/> instances.
 	/// </para>
 	/// </summary>
-	public class MockDbContextProvider<TContext, TDbContext> : OverridingDbContextProvider<TContext, TDbContext>
+	public class MockDbContextProvider<TContext, TDbContext> : DbContextProvider<TContext, TDbContext>
 		where TDbContext : DbContext
 	{
 		public override DbContextScopeOptions Options { get; }
@@ -106,7 +105,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			return this.CreateDummyExecutionStrategy(dbContext);
 		}
 
-		protected override TResult ExecuteInDbContextScope<TState, TResult>(
+		public override TResult ExecuteInDbContextScope<TState, TResult>(
 			AmbientScopeOption scopeOption,
 			TState state, Func<IExecutionScope<TState>, TResult> task)
 		{
@@ -122,7 +121,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			}
 		}
 
-		protected override Task<TResult> ExecuteInDbContextScopeAsync<TState, TResult>(
+		public override Task<TResult> ExecuteInDbContextScopeAsync<TState, TResult>(
 			AmbientScopeOption scopeOption,
 			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{

@@ -99,7 +99,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// <summary>
 		/// Returns a new implementation factory for the <see cref="IDbContextProvider{TContext}"/>.
 		/// </summary>
-		internal static Func<IServiceProvider, DbContextProvider<TDbContext>> GetFactoryForDbContextProviderWithOptions<TDbContext>(Options<TDbContext> options)
+		internal static Func<IServiceProvider, RegularDbContextProvider<TDbContext>> GetFactoryForDbContextProviderWithOptions<TDbContext>(Options<TDbContext> options)
 			where TDbContext : DbContext
 		{
 			if (options.DbContexFactory is null)
@@ -116,12 +116,12 @@ namespace Architect.EntityFramework.DbContextManagement
 			return CreateDbContextProvider;
 
 			// Local function that returns a new provider instance
-			DbContextProvider<TDbContext> CreateDbContextProvider(IServiceProvider serviceProvider)
+			RegularDbContextProvider<TDbContext> CreateDbContextProvider(IServiceProvider serviceProvider)
 			{
 				var factory = dbContextFactoryFunction is null
 					? serviceProvider.GetRequiredService<IDbContextFactory<TDbContext>>()
 					: new DbContextFactory<TDbContext>(serviceProvider, dbContextFactoryFunction);
-				var instance = new DbContextProvider<TDbContext>(factory, dbContextProviderOptions);
+				var instance = new RegularDbContextProvider<TDbContext>(factory, dbContextProviderOptions);
 				return instance;
 			}
 		}

@@ -11,7 +11,7 @@ namespace Architect.EntityFramework.DbContextManagement
 	{
 		#region With state
 
-		// Already implemented by default interface implementation
+		// This primary overload is specified on the interface itself
 		//public static TResult ExecuteInDbContextScope<TDbContext, TState, TResult>(this IDbContextProvider<TDbContext> provider,
 		//	AmbientScopeOption scopeOption,
 		//	TState state, Func<IExecutionScope<TState>, TResult> task)

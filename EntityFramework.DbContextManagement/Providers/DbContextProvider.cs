@@ -1,34 +1,74 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Architect.AmbientContexts;
-using Architect.EntityFramework.DbContextManagement.Providers;
+using Architect.EntityFramework.DbContextManagement.ExecutionStrategies;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.EntityFramework.DbContextManagement
 {
 	/// <summary>
-	/// <para>
-	/// Provides an ambient <see cref="DbContextScope"/>, code in whose scope can access the <see cref="DbContext"/> through <see cref="IDbContextAccessor{TDbContext}"/>.
-	/// </para>
+	/// Abstract base class for <see cref="IDbContextProvider{TDbContext}"/> for use when implementing a subset of the interface methods.
 	/// </summary>
-	internal sealed class DbContextProvider<TDbContext> : IDbContextProvider<TDbContext>, IInternalDbContextProvider<TDbContext>
+	/// <typeparam name="TDbContext">The type of the <see cref="DbContext"/>.</typeparam>
+	public abstract class DbContextProvider<TDbContext> : IDbContextProvider<TDbContext>
 		where TDbContext : DbContext
 	{
-		private IDbContextFactory<TDbContext> DbContextFactory { get; }
+		public virtual DbContextScopeOptions Options => DbContextScopeOptions.Default;
 
-		public DbContextScopeOptions Options { get; }
+		public abstract DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null);
 
-		public DbContextProvider(IDbContextFactory<TDbContext> dbContextFactory, DbContextScopeOptions? options = null)
+		public IExecutionStrategy CreateExecutionStrategy(DbContext dbContext)
 		{
-			this.DbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
-
-			this.Options = options ?? DbContextScopeOptions.Default;
+			var executionStrategy = this.GetExecutionStrategyFromDbContext(dbContext);
+			executionStrategy = this.CreateWrappingExecutionStrategy(executionStrategy);
+			return executionStrategy;
 		}
 
-		public DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
+		/// <summary>
+		/// Gets a new <see cref="IExecutionStrategy"/> directly from the given <see cref="DbContext"/>.
+		/// </summary>
+		protected virtual IExecutionStrategy GetExecutionStrategyFromDbContext(DbContext dbContext)
 		{
-			var dbContextScope = DbContextScope.Create(this.DbContextFactory, scopeOption ?? this.Options.DefaultScopeOption);
-			return dbContextScope;
+			var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+			return executionStrategy;
 		}
+
+		/// <summary>
+		/// Returns the given <see cref="IExecutionStrategy"/>, potentially wrapped in another strategy, depending on the <see cref="Options"/>.
+		/// </summary>
+		protected virtual IExecutionStrategy CreateWrappingExecutionStrategy(IExecutionStrategy baseExecutionStrategy)
+		{
+			if ((this.Options.ExecutionStrategyOptions & ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure) == ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure)
+				baseExecutionStrategy = new RetryOnOptimisticConcurrencyFailureExecutionStrategy(baseExecutionStrategy);
+
+			return baseExecutionStrategy;
+		}
+
+		public virtual TResult ExecuteInDbContextScope<TState, TResult>(
+			AmbientScopeOption scopeOption,
+			TState state, Func<IExecutionScope<TState>, TResult> task)
+		{
+			return TransactionalStrategyExecutor.ExecuteInDbContextScope(this, scopeOption, state, task);
+		}
+
+		public virtual Task<TResult> ExecuteInDbContextScopeAsync<TState, TResult>(
+			AmbientScopeOption scopeOption,
+			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
+		{
+			return TransactionalStrategyExecutor.ExecuteInDbContextScopeAsync(this, scopeOption, state, cancellationToken, task);
+		}
+	}
+
+	/// <summary>
+	/// Abstract base class for <see cref="IDbContextProvider{TDbContext}"/> for use when implementing a subset of the interface methods.
+	/// </summary>
+	/// <typeparam name="TContext">A type used merely to <strong>represent</strong> the <see cref="DbContext"/>, without needing an actual reference to <see cref="Microsoft.EntityFrameworkCore"/>.</typeparam>
+	/// <typeparam name="TDbContext">The type of the actual <see cref="DbContext"/>.</typeparam>
+	public abstract class DbContextProvider<TContext, TDbContext> : DbContextProvider<TDbContext>, IDbContextProvider<TContext>
+		where TDbContext : DbContext
+	{
 	}
 }

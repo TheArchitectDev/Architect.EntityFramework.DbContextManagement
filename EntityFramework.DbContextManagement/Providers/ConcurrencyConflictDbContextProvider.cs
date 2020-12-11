@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.DbContextScopes;
-using Architect.EntityFramework.DbContextManagement.Providers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -22,7 +21,7 @@ namespace Architect.EntityFramework.DbContextManagement
 	/// By executing all of the work before throwing, the most mistakes are detected (such as an auto-increment ID already being assigned when the next attempt begins).
 	/// </para>
 	/// </summary>
-	public class ConcurrencyConflictDbContextProvider<TContext, TDbContext> : OverridingDbContextProvider<TContext, TDbContext>
+	public class ConcurrencyConflictDbContextProvider<TContext, TDbContext> : DbContextProvider<TContext, TDbContext>
 		where TDbContext : DbContext
 	{
 		public override DbContextScopeOptions Options => this.WrappedProvider.Options;
@@ -64,7 +63,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			throw new NotSupportedException("This code should not be reached, since we delegate to the wrapped instance at a higher level.");
 		}
 
-		protected override TResult ExecuteInDbContextScope<TState, TResult>(AmbientScopeOption scopeOption, TState state, Func<IExecutionScope<TState>, TResult> task)
+		public override TResult ExecuteInDbContextScope<TState, TResult>(AmbientScopeOption scopeOption, TState state, Func<IExecutionScope<TState>, TResult> task)
 		{
 			return this.WrappedProvider.ExecuteInDbContextScope(scopeOption, state, scope =>
 			{
@@ -75,7 +74,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			});
 		}
 
-		protected override Task<TResult> ExecuteInDbContextScopeAsync<TState, TResult>(AmbientScopeOption scopeOption, TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
+		public override Task<TResult> ExecuteInDbContextScopeAsync<TState, TResult>(AmbientScopeOption scopeOption, TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{
 			return this.WrappedProvider.ExecuteInDbContextScopeAsync(scopeOption, state, cancellationToken, async (scope, ct) =>
 			{
