@@ -8,5 +8,16 @@ namespace Architect.EntityFramework.DbContextManagement.Tests
 		{
 			return new TestDbContext();
 		}
+
+		public TestDbContext()
+			: base(new DbContextOptionsBuilder().UseSqlite("Filename=:memory:").Options)
+		{
+		}
+
+		public TestDbContext(DbContextOptions options)
+			: base(options)
+		{
+
+		}
 	}
 }
