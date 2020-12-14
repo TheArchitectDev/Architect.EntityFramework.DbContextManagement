@@ -41,28 +41,41 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 		public TResult Execute<TState, TResult>(TState state, Func<DbContext, TState, TResult> operation, Func<DbContext, TState, ExecutionResult<TResult>> verifySucceeded)
 		{
-			while (true)
+			var result = this.ExecuteCore(async: false,
+				state: (Self: this, State: state, Operation: operation, VerifySucceeded: verifySucceeded),
+				state => PerformSynchronously(state.Self, state.State, state.Operation, state.VerifySucceeded));
+
+			return result.RequireCompleted();
+
+			// Local function that synchronously performs the operation and returns the result wrapped in a task
+			static Task<TResult> PerformSynchronously(RetryOnOptimisticConcurrencyFailureExecutionStrategy self,
+				TState state, Func<DbContext, TState, TResult> operation, Func<DbContext, TState, ExecutionResult<TResult>> verifySucceeded)
 			{
-				try
-				{
-					var result = this.WrappedStrategy.Execute(state, operation, verifySucceeded);
-					return result;
-				}
-				catch (DbUpdateConcurrencyException) when (this.RetriesOnOptimisticConcurrencyFailure)
-				{
-					this.RetryCount++;
-				}
+				var result = self.WrappedStrategy.Execute(state, operation, verifySucceeded);
+				return Task.FromResult(result);
 			}
 		}
 
-		public async Task<TResult> ExecuteAsync<TState, TResult>(TState state, Func<DbContext, TState, CancellationToken, Task<TResult>> operation,
+		public Task<TResult> ExecuteAsync<TState, TResult>(TState state, Func<DbContext, TState, CancellationToken, Task<TResult>> operation,
 			Func<DbContext, TState, CancellationToken, Task<ExecutionResult<TResult>>> verifySucceeded, CancellationToken cancellationToken = default)
+		{
+			var result = this.ExecuteCore(async: true,
+				state: (Self: this, State: state, Operation: operation, VerifySucceeded: verifySucceeded, CancellationToken: cancellationToken),
+				state => state.Self.WrappedStrategy.ExecuteAsync(state.State, state.Operation, state.VerifySucceeded, state.CancellationToken));
+
+			return result;
+		}
+
+		private async Task<TResult> ExecuteCore<TState, TResult>(bool async, TState state, Func<TState, Task<TResult>> operation)
 		{
 			while (true)
 			{
 				try
 				{
-					var result = await this.WrappedStrategy.ExecuteAsync(state, operation, verifySucceeded, cancellationToken).ConfigureAwait(false);
+					var result = async
+						? await operation(state)
+						: operation(state).RequireCompleted();
+
 					return result;
 				}
 				catch (DbUpdateConcurrencyException) when (this.RetriesOnOptimisticConcurrencyFailure)
