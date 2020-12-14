@@ -1,23 +1,39 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace Architect.EntityFramework.DbContextManagement.Tests
 {
 	internal class TestDbContext : DbContext
 	{
+		public DbSet<TestEntity> TestEntities { get; private set; }
+
 		public static TestDbContext Create()
 		{
-			return new TestDbContext();
+			var result = new TestDbContext();
+			return result;
 		}
 
-		public TestDbContext()
+		public static TestDbContext Create(DbConnection dbConnection)
+		{
+			var result = new TestDbContext(dbConnection);
+			return result;
+		}
+
+		private TestDbContext()
 			: base(new DbContextOptionsBuilder().UseSqlite("Filename=:memory:").Options)
 		{
 		}
 
-		public TestDbContext(DbContextOptions options)
-			: base(options)
+		private TestDbContext(DbConnection dbConnection)
+			: base(new DbContextOptionsBuilder().UseSqlite(dbConnection).Options)
 		{
-
 		}
+	}
+
+	internal class TestEntity
+	{
+		[Key]
+		public int Id { get; set; }
 	}
 }
