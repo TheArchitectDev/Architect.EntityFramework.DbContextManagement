@@ -2,7 +2,7 @@
 
 Manage your DbContexts the right way.
 
-The data access layer or infrastructure layer uses the DbContext (e.g. from a repository). Controlling its scope and transaction lifetime, however, is ideally the reponsibility of the orchestrating layer (e.g. from an application service). This package adds that ability to Entity Framework Core 5.0.0 and up.
+The persistence layer or infrastructure layer uses the DbContext (e.g. from a repository). Controlling its scope and transaction lifetime, however, is ideally the reponsibility of the orchestrating layer (e.g. from an application service). This package adds that ability to Entity Framework Core 5.0.0 and up.
 
 The venerable Mehdi El Gueddari explains the benefits of this approach in his long and excellent [post](https://mehdi.me/ambient-dbcontext-in-ef6/). However, a truly good and up-to-date implementation was lacking. In fact, such an implementation has the potential to handle many more good practices out-of-the-box.
 
@@ -24,7 +24,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-**Access** the current DbContext from the data access layer:
+**Access** the current DbContext from the persistence layer:
 
 ```cs
 public class MyRepository : IMyRepository
@@ -54,7 +54,7 @@ public class MyRepository : IMyRepository
 
 So far, the above would throw, since we have not made a DbContext available.
 
-**Provide** a DbContext from the orchestrating layer, which eventually calls down into the data access layer (directly or indirectly):
+**Provide** a DbContext from the orchestrating layer (which eventually calls down into the persistence layer, directly or indirectly):
 
 ```cs
 public class MyApplicationService
@@ -97,7 +97,7 @@ Managing DbContexts with `IDbContextProvider` and `IDbContextAccessor` provides 
 - DbContext management is independent of the application type or architecture. (For example, this approach works perfectly with Blazor Server, avoiding its [usual troubles](https://docs.microsoft.com/en-us/aspnet/core/blazor/blazor-server-ef-core?view=aspnetcore-3.1). It also behaves exactly the same in integration tests.)
 - Different concrete DbContext subtypes are handled independently.
 - A unit of work may be nested. For example, a set of operations may explicitly require being transactional. If there is an encompassing transaction, they can join it; if not, they can have their own transaction.
-- It is possible to [keep the DbContext type `internal`](#internal-dbcontext-types) to the data access layer, without compromising any of the above.
+- It is possible to [keep the DbContext type `internal`](#internal-dbcontext-types) to the persistence layer, without compromising any of the above.
 
 #### Advantages of Scoped Execution
 
@@ -272,7 +272,7 @@ public interface IOrderDatabase
 }
 ```
 
-The interface needs to be visible to both the orchestrating layer and the data access layer. There may be a utility project that is visible to both, or the domain layer might be suitable. (If you feel uncomfortable admitting to the existing of a database from the domain layer, consider that the business tends to recognize its existence. Alternatively, choose a different set of challenges and stick with a public DbContext type.)
+The interface needs to be visible to both the orchestrating layer and the persistence layer. There may be a utility project that is visible to both, or the domain layer might be suitable. (If you feel uncomfortable admitting to the existing of a database from the domain layer, consider that the business tends to recognize its existence. Alternatively, choose a different set of challenges and stick with a public DbContext type.)
 
 To use `IOrderDatabase` to represent `OrderDbContext`, register the library as follows:
 
@@ -300,9 +300,9 @@ public static IServiceCollection AddDatabaseInfrastructure(this IServiceCollecti
 }
 ```
 
-The data access layer still injects an `IDbContextAccessor<OrderDbContext>` as normal. The orchestrating layer, however, can now control things with an `IDbContextProvider<IOrderDatabase>` - note the generic type argument.
+The persistence layer still injects an `IDbContextAccessor<OrderDbContext>` as normal. The orchestrating layer, however, can now control things with an `IDbContextProvider<IOrderDatabase>` - note the generic type argument.
 
-### Testing the Data Access Layer
+### Testing the Persistence Layer
 
 When testing the layer that actually uses the DbContext, we will have a dependency on `IDbContextAccessor`. The implementation may use that dependency to try to obtain the DbContext.
 
@@ -323,7 +323,7 @@ hostBuilder.ConfigureServices(services =>
 
 ### Unit Testing the Orchestrating Layer
 
-When we write unit tests on the orchestrating layer, the data access code will be mocked out. As such, `IDbContextAccessor` will not be needed. However, the orchestrating layer will still have a dependency on `IDbContextProvider`. Moreover, if scoped execution is used, the flow of execution should resemble the production scenario.
+When we write unit tests on the orchestrating layer, the persistence code will be mocked out. As such, `IDbContextAccessor` will not be needed. However, the orchestrating layer will still have a dependency on `IDbContextProvider`. Moreover, if scoped execution is used, the flow of execution should resemble the production scenario.
 
 The package provides a `MockDbContextProvider`, which makes it easy to satisfy the dependency while still providing the original flow of execution.
 
