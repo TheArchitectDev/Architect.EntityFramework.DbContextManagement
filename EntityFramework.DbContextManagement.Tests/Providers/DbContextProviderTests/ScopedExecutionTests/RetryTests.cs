@@ -81,6 +81,32 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 
 		[Theory]
 		[MemberData(nameof(ScopedExecutionTestBase.GetOverloads))]
+		public async Task WithExceptionOnFirstAttemptAndWithAbort_ShouldAbort(Overload overload)
+		{
+			var attemptCount = 0;
+
+			await this.Execute(overload, this.Provider, (scope, ct) =>
+			{
+				var entityToInsert = new TestEntity() { Id = 1 + attemptCount }; // Unique IDs
+				scope.DbContext.Add(entityToInsert);
+				scope.DbContext.SaveChanges();
+
+				scope.Abort();
+
+				if (attemptCount++ == 0) this.ThrowExceptionThatShouldTriggerRetry(); // Only once
+
+				return Task.FromResult(true);
+			});
+
+			using var dbContext = this.TestDbContextFactory.CreateDbContext();
+
+			var entityCount = dbContext.TestEntities.Count();
+
+			Assert.Equal(0, entityCount);
+		}
+
+		[Theory]
+		[MemberData(nameof(ScopedExecutionTestBase.GetOverloads))]
 		public async Task WithExceptionOnFirstAttempt_ShouldRollBack(Overload overload)
 		{
 			var attemptCount = 0;
