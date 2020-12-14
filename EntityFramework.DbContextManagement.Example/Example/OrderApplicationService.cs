@@ -150,7 +150,7 @@ namespace EntityFramework.DbContextManagement.Example.Example
 				//dbContextScope.DbContext.Entry(order).State = EntityState.Detached;
 				//dbContextScope.DbContext.Entry(one).State = EntityState.Detached;
 
-				var affected = dbContextScope.DbContext.Database.ExecuteSqlRaw("UPDATE Orders SET UpdateDateTime = date('now')");
+				var affected = await dbContextScope.DbContext.Database.ExecuteSqlRawAsync("UPDATE Orders SET UpdateDateTime = date('now')");
 				if (affected != 0) throw new Exception();
 
 				dbContextScope.DbContext.SaveChanges();
@@ -235,7 +235,7 @@ namespace EntityFramework.DbContextManagement.Example.Example
 
 				var loaded = dbContextScope.DbContext.Orders.First(); // Triggers save due to earlier adding
 
-				// #TODO: Test which properties get saved to the database if you use Update(). Answer this both with and without Tracking.
+				// Sometime, test which properties get saved to the database if you use Update(). Answer this both with and without Tracking.
 				loaded.Name += "HI";
 
 				dbContextScope.DbContext.Database.ExecuteSqlRaw("SELECT COUNT(*) FROM Orders"); // Triggers save due to earlier property modification
