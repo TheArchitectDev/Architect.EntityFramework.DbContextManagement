@@ -1,41 +1,30 @@
 ﻿using System;
-using System.Collections.Generic;
 
-namespace EntityFramework.DbContextManagement.Example
+namespace Architect.EntityFramework.DbContextManagement.Example
 {
 	public class Order
 	{
-		public int Id { get; set; }
-		public string Name { get; set; }
+		public override string ToString() => $"{{{nameof(Order)} Id={this.Id} Name={this.Name}}}";
 
-		public DateTime? DateOfBirth { get; set; }
+		public int Id { get; }
+		public string Name { get; private set; }
 
-		public DateTime UpdateDateTime { get; set; } = DateTime.UnixEpoch;
-
-		public IReadOnlyCollection<Child> Children { get; set; } = new List<Child>();
-
-		public void AddChild(Child child)
-		{
-			(this.Children as ICollection<Child>).Add(child);
-			//child.Attach(this);
-		}
-	}
-
-	public class Child
-	{
-		public int Id { get; set; }
-		public int OrderId { get; set; }
-		public string Name { get; set; }
-
-		public Child(int id, string name)
+		public Order(int id, string name)
 		{
 			this.Id = id;
-			this.Name = name;
+
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
+
+			if (String.IsNullOrWhiteSpace(this.Name))
+				throw new ArgumentException($"{nameof(this.Name)} must not be empty.");
 		}
 
-		internal void Attach(Order order)
+		public void Rename(string name)
 		{
-			this.OrderId = order.Id;
+			if (String.IsNullOrWhiteSpace(name))
+				throw new ArgumentException($"{nameof(this.Name)} must not be empty.");
+
+			this.Name = name;
 		}
 	}
 }
