@@ -28,7 +28,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </para>
 		/// <para>
 		/// The task is performed through the <see cref="DbContext"/>'s <see cref="IExecutionStrategy"/>.
-		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on certain exceptions.
+		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on transient exceptions.
 		/// Each attempt is provided with a fresh <see cref="DbContext"/>, with no state leakage.
 		/// </para>
 		/// <para>
@@ -67,7 +67,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </para>
 		/// <para>
 		/// The task is performed through the <see cref="DbContext"/>'s <see cref="IExecutionStrategy"/>.
-		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on certain exceptions.
+		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on transient exceptions.
 		/// Each attempt is provided with a fresh <see cref="DbContext"/>, with no state leakage.
 		/// </para>
 		/// <para>
@@ -98,7 +98,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </para>
 		/// <para>
 		/// The task is performed through the <see cref="DbContext"/>'s <see cref="IExecutionStrategy"/>.
-		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on certain exceptions.
+		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on transient exceptions.
 		/// Each attempt is provided with a fresh <see cref="DbContext"/>, with no state leakage.
 		/// </para>
 		/// <para>
@@ -133,7 +133,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </para>
 		/// <para>
 		/// The task is performed through the <see cref="DbContext"/>'s <see cref="IExecutionStrategy"/>.
-		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on certain exceptions.
+		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on transient exceptions.
 		/// Each attempt is provided with a fresh <see cref="DbContext"/>, with no state leakage.
 		/// </para>
 		/// <para>
@@ -165,7 +165,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </para>
 		/// <para>
 		/// The task is performed through the <see cref="DbContext"/>'s <see cref="IExecutionStrategy"/>.
-		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on certain exceptions.
+		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on transient exceptions.
 		/// Each attempt is provided with a fresh <see cref="DbContext"/>, with no state leakage.
 		/// </para>
 		/// <para>
@@ -197,7 +197,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </para>
 		/// <para>
 		/// The task is performed through the <see cref="DbContext"/>'s <see cref="IExecutionStrategy"/>.
-		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on certain exceptions.
+		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on transient exceptions.
 		/// Each attempt is provided with a fresh <see cref="DbContext"/>, with no state leakage.
 		/// </para>
 		/// <para>
@@ -228,7 +228,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </para>
 		/// <para>
 		/// The task is performed through the <see cref="DbContext"/>'s <see cref="IExecutionStrategy"/>.
-		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on certain exceptions.
+		/// The <see cref="IExecutionStrategy"/> may provide behavior such as retry attempts on transient exceptions.
 		/// Each attempt is provided with a fresh <see cref="DbContext"/>, with no state leakage.
 		/// </para>
 		/// <para>
