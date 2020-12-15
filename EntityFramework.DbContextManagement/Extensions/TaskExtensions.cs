@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 namespace Architect.EntityFramework.DbContextManagement
 {
 	/// <summary>
+	/// <para>
 	/// Provides extensions on <see cref="Task"/> and related types.
+	/// </para>
+	/// <para>
+	/// Many of these are aimed at implementing synchronous overloads without a duplicated implementation.
+	/// Such overloads make use of generalized, task-based implementations, using these extension methods to confirm receiving a task that was completed successfully (or faulted).
+	/// </para>
 	/// </summary>
 	internal static class TaskExtensions
 	{

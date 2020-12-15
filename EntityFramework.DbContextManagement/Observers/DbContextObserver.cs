@@ -121,14 +121,14 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 			// Local function that performs the work asynchronously
 			async Task PerformAsync()
 			{
-				// Pretend that something is being saved (for example, this allows a transaction to be started)
 				var initialTransaction = this.DbContext.Database.CurrentTransaction;
 
+				// Pretend that something is being saved (for example, this allows a transaction to be started)
 				await this.WillSaveChanges(async, cancellationToken).ConfigureAwait(false);
 
 				var newTransaction = this.DbContext.Database.CurrentTransaction;
 
-				// If saving started a new transaction, make sure that the current command enlists in that transaction
+				// If pretending to save has started a new transaction, make sure that the current command enlists in that transaction
 				if (newTransaction != initialTransaction)
 					command.Transaction = newTransaction.GetDbTransaction();
 			}
