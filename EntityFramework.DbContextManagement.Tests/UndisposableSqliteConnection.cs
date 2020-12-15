@@ -5,7 +5,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests
 {
 	/// <summary>
 	/// Helps pretend we have pooling, accessing a temporary, in-memory database while pretending to dispose connections in between operations.
-	/// Also permits reuse between DbContext instances.
+	/// Also enables connection reuse between DbContext instances, without losing the in-memory database.
 	/// </summary>
 	internal sealed class UndisposableSqliteConnection : SqliteConnection
 	{
