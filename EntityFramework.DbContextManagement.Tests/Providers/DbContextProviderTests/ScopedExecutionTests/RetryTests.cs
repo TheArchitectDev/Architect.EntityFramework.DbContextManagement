@@ -136,7 +136,6 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 				scope.DbContext.Add(entityToInsert);
 				scope.DbContext.SaveChanges();
 				
-				// #TODO: Check if summaries describe Abort() functionality correctly (i.e. only acts once disposal is reached)
 				// The exceptions that cause a retry may cause the current scope to abort
 				// If the abort were carried across retries, attempts to use the DbContext during the retries would fail
 				scope.Abort();
