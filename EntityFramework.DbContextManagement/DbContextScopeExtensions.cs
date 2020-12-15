@@ -18,7 +18,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </para>
 		/// <para>
 		/// This overload allows any <typeparamref name="TDbContextRepresentation"/> to represent <typeparamref name="TDbContext"/> for the <see cref="IDbContextProvider{TContext}"/>.
-		/// This way, visibility of <typeparamref name="TDbContext"/> can be restricted to the data access layer,
+		/// This way, visibility of <typeparamref name="TDbContext"/> can be restricted to the persistence layer,
 		/// while the composition root can still control the <see cref="DbContext"/> and transaction boundaries.
 		/// </para>
 		/// <para>
@@ -27,11 +27,11 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// <see cref="IDbContextProvider{TContext}.ExecuteInDbContextScope"/> (recommended) or <see cref="IDbContextProvider{TContext}.CreateDbContextScope"/>.
 		/// </para>
 		/// <para>
-		/// From the data access code (e.g. a repository), inject an <see cref="IDbContextAccessor{TDbContext}"/> to access the current <see cref="DbContext"/>.
+		/// From the persistence code (e.g. a repository), inject an <see cref="IDbContextAccessor{TDbContext}"/> to access the current <see cref="DbContext"/>.
 		/// </para>
 		/// <para>
 		/// This way, the composition root controls the <see cref="DbContext"/> and the transaction boundaries.
-		/// The data access code simply uses the <see cref="DbContext"/> that the composition root has made available.
+		/// The persistence code simply uses the <see cref="DbContext"/> that the composition root has made available.
 		/// </para>
 		/// </summary>
 		/// <typeparam name="TDbContextRepresentation">A type used to represent <typeparamref name="TDbContext"/> without being able to see it.</typeparam>
@@ -68,11 +68,11 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// <see cref="IDbContextProvider{TContext}.ExecuteInDbContextScope"/> (recommended) or <see cref="IDbContextProvider{TContext}.CreateDbContextScope"/>.
 		/// </para>
 		/// <para>
-		/// From the data access code (e.g. a repository), inject an <see cref="IDbContextAccessor{TDbContext}"/> to access the current <see cref="DbContext"/>.
+		/// From the persistence code (e.g. a repository), inject an <see cref="IDbContextAccessor{TDbContext}"/> to access the current <see cref="DbContext"/>.
 		/// </para>
 		/// <para>
 		/// This way, the composition root controls the <see cref="DbContext"/> and the transaction boundaries.
-		/// The data access code simply uses the <see cref="DbContext"/> that the composition root has made available.
+		/// The persistence code simply uses the <see cref="DbContext"/> that the composition root has made available.
 		/// </para>
 		/// </summary>
 		/// <typeparam name="TDbContext">The type of <see cref="DbContext"/> to work with.</typeparam>
