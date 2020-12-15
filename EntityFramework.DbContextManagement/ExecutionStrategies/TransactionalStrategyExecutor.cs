@@ -126,7 +126,6 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 				try
 				{
-					// #TODO: Test retries with SQL Server
 					result = await task(executionScope, cancellationToken).ConfigureAwait(false);
 
 					isExecutionScopeCompleted = executionScope.IsCompleted;
