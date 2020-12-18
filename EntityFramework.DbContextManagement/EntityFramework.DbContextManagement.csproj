@@ -24,7 +24,7 @@ Manage your DbContexts the right way.
 
 https://github.com/TheArchitectDev/Architect.EntityFramework.DbContextManagement
 
-The data access layer or infrastructure layer uses the DbContext (e.g. from a repository). Controlling its scope and transaction lifetime, however, is ideally the reponsibility of the orchestrating layer (e.g. from an application service). This package adds that ability to Entity Framework Core 5.0.0 and up.
+The persistence layer or infrastructure layer uses the DbContext (e.g. from a repository). Controlling its scope and transaction lifetime, however, is ideally the reponsibility of the orchestrating layer (e.g. from an application service). This package adds that ability to Entity Framework Core 5.0.0 and up.
 
 // Register
 public void ConfigureServices(IServiceCollection services)
