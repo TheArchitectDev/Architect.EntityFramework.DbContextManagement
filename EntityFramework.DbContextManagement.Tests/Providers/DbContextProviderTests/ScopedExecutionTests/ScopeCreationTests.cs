@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Architect.AmbientContexts;
+﻿using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.DbContextScopes;
 using Microsoft.EntityFrameworkCore;
 using Xunit;

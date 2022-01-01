@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContextProviderTests
+﻿namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContextProviderTests
 {
 	public abstract class DbContextProviderTestBase : IDisposable
 	{

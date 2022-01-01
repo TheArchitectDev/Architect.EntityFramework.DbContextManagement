@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Transactions;
+﻿using System.Transactions;
 using Xunit;
 
 namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContextProviderTests.ScopedExecutionTests
