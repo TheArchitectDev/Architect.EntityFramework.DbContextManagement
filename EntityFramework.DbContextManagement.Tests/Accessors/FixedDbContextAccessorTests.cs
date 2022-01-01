@@ -1,5 +1,4 @@
-﻿using System;
-using Xunit;
+﻿using Xunit;
 
 namespace Architect.EntityFramework.DbContextManagement.Tests.Accessors
 {

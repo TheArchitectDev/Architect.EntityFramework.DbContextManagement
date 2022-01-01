@@ -122,7 +122,6 @@ namespace Architect.EntityFramework.DbContextManagement
 			return provider.ExecuteInDbContextScopeAsync(provider.Options.DefaultScopeOption, state, cancellationToken, task);
 		}
 
-
 		#endregion
 
 		#region Without state

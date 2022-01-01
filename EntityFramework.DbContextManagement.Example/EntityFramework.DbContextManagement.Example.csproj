@@ -1,20 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyName>Architect.EntityFramework.DbContextManagement.Example</AssemblyName>
-    <RootNamespace>Architect.EntityFramework.DbContextManagement.Example</RootNamespace>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<AssemblyName>Architect.EntityFramework.DbContextManagement.Example</AssemblyName>
+		<RootNamespace>Architect.EntityFramework.DbContextManagement.Example</RootNamespace>
+		<ImplicitUsings>Enable</ImplicitUsings>
+		<IsPackable>False</IsPackable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.10" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\EntityFramework.DbContextManagement\EntityFramework.DbContextManagement.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\EntityFramework.DbContextManagement\EntityFramework.DbContextManagement.csproj" />
+	</ItemGroup>
 
 </Project>

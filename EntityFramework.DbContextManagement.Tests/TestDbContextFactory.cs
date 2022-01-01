@@ -1,4 +1,3 @@
-﻿using System;
 using Microsoft.EntityFrameworkCore;
 
 namespace Architect.EntityFramework.DbContextManagement.Tests

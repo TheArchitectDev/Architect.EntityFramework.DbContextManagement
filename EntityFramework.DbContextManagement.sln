@@ -1,13 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30309.148
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFramework.DbContextManagement", "EntityFramework.DbContextManagement\EntityFramework.DbContextManagement.csproj", "{4605173B-B3F7-46B4-8685-2FE52BF3884B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFramework.DbContextManagement.Example", "EntityFramework.DbContextManagement.Example\EntityFramework.DbContextManagement.Example.csproj", "{B997A9AF-CFD1-41EB-9055-9D08701B56C3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFramework.DbContextManagement.Tests", "EntityFramework.DbContextManagement.Tests\EntityFramework.DbContextManagement.Tests.csproj", "{E4086DFE-5FBF-4666-9E05-1B81F9ACABE2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6171C8C2-FF02-4C8C-BE48-237487EE866B}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		pipeline-publish-preview.yml = pipeline-publish-preview.yml
+		pipeline-publish-stable.yml = pipeline-publish-stable.yml
+		pipeline-verify.yml = pipeline-verify.yml
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

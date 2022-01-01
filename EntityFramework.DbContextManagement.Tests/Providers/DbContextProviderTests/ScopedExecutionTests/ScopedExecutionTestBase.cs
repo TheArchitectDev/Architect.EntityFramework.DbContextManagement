@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Architect.AmbientContexts;
+﻿using Architect.AmbientContexts;
 
 namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContextProviderTests.ScopedExecutionTests
 {
@@ -70,7 +65,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 
 		protected bool ExtractState(IExecutionScope scope)
 		{
-			if (!(scope is IExecutionScope<bool> scopeWithBoolState))
+			if (scope is not IExecutionScope<bool> scopeWithBoolState)
 				throw new Exception($"{scope} does not have bool state.");
 			return scopeWithBoolState.State;
 		}

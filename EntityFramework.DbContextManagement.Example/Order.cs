@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Architect.EntityFramework.DbContextManagement.Example
+﻿namespace Architect.EntityFramework.DbContextManagement.Example
 {
 	public class Order
 	{

@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 
 namespace Architect.EntityFramework.DbContextManagement.Tests
 {

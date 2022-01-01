@@ -130,7 +130,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 				// If pretending to save has started a new transaction, make sure that the current command enlists in that transaction
 				if (newTransaction != initialTransaction)
-					command.Transaction = newTransaction.GetDbTransaction();
+					command.Transaction = newTransaction?.GetDbTransaction();
 			}
 		}
 

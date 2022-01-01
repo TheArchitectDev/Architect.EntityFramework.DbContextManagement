@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Transactions;
+﻿using System.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -125,7 +122,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 					Assert.Equal(1, uncommittedEntityCount);
 
 					return Task.FromResult(true);
-				});
+				}, cancellationToken: ct);
 
 				// We should have rolled back when the inner scope was disposed
 				{
@@ -159,7 +156,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 					scope.DbContext.SaveChanges();
 
 					return Task.FromResult(true);
-				});
+				}, cancellationToken: ct);
 
 				// We should be unable to use the DbContext any longer
 				Assert.Throws<TransactionAbortedException>(() => ((TestDbContext)scope.DbContext).TestEntities.Count());
@@ -179,9 +176,9 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 				{
 					await this.Execute<bool>(overload, this.Provider, (scope, ct) =>
 					{
-					// Doing this early is just fine
-					// It will only take effect once the current execution scope ends
-					scope.Abort();
+						// Doing this early is just fine
+						// It will only take effect once the current execution scope ends
+						scope.Abort();
 
 						var entityToInsert = new TestEntity() { Id = 1 };
 						scope.DbContext.Add(entityToInsert);
@@ -191,7 +188,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 						Assert.Equal(1, uncommittedEntityCount);
 
 						throw new Exception("This should cause the scoped execution to abort and roll back.");
-					});
+					}, cancellationToken: ct);
 				}
 				catch
 				{
@@ -232,7 +229,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 						scope.DbContext.SaveChanges();
 
 						throw new Exception("This should cause the scoped execution to abort and roll back.");
-					});
+					}, cancellationToken: ct);
 				}
 				catch
 				{

@@ -1,5 +1,4 @@
-﻿using System;
-using Architect.AmbientContexts;
+﻿using Architect.AmbientContexts;
 using Xunit;
 
 namespace Architect.EntityFramework.DbContextManagement.Tests.Accessors
