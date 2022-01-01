@@ -21,7 +21,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 				Assert.Equal(DbContextScope<TestDbContext>.CurrentDbContext, accessor.CurrentDbContext);
 
 				if (this.IsAsync(overload))
-					await Task.Delay(TimeSpan.FromTicks(1));
+					await Task.Delay(TimeSpan.FromTicks(1), ct);
 
 				Assert.NotNull(DbContextScope<TestDbContext>.CurrentOrDefault);
 				Assert.Equal(DbContextScope<TestDbContext>.CurrentDbContext, accessor.CurrentDbContext);
@@ -42,7 +42,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 			await this.Execute(overload, this.Provider, async (scope, ct) =>
 			{
 				if (this.IsAsync(overload))
-					await Task.Delay(TimeSpan.FromTicks(1));
+					await Task.Delay(TimeSpan.FromTicks(1), ct);
 
 				return true;
 			});
@@ -57,7 +57,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 		{
 			await Assert.ThrowsAsync<InvalidOperationException>(() =>
 				this.Execute(overload, this.Provider, task: (scope, ct) =>
-					this.Execute(overload, this.Provider, scopeOption: AmbientScopeOption.NoNesting, task: (scope, ct) => Task.FromResult(true))));
+					this.Execute(overload, this.Provider, scopeOption: AmbientScopeOption.NoNesting, task: (scope, ct) => Task.FromResult(true), cancellationToken: ct)));
 		}
 
 		[Theory]
@@ -81,7 +81,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 					innerUnitOfWork = innerScope.UnitOfWork;
 					innerDbContext = innerScope.DbContext;
 					return Task.FromResult(true);
-				});
+				}, cancellationToken: ct);
 			});
 
 			Assert.NotNull(outerUnitOfWork);
@@ -114,7 +114,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 					innerUnitOfWork = innerScope.UnitOfWork;
 					innerDbContext = innerScope.DbContext;
 					return Task.FromResult(true);
-				});
+				}, cancellationToken: ct);
 			});
 
 			Assert.NotNull(outerUnitOfWork);

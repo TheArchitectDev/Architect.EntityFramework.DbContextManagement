@@ -17,12 +17,14 @@ namespace Architect.EntityFramework.DbContextManagement.Dummies
 			this.DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 		}
 
-		public TResult Execute<TState, TResult>(TState state, Func<DbContext, TState, TResult> operation, Func<DbContext, TState, ExecutionResult<TResult>> verifySucceeded)
+		public TResult Execute<TState, TResult>(TState state, Func<DbContext, TState, TResult> operation, Func<DbContext, TState, ExecutionResult<TResult>>? verifySucceeded)
 		{
 			return operation(this.DbContext, state);
 		}
 
-		public Task<TResult> ExecuteAsync<TState, TResult>(TState state, Func<DbContext, TState, CancellationToken, Task<TResult>> operation, Func<DbContext, TState, CancellationToken, Task<ExecutionResult<TResult>>> verifySucceeded, CancellationToken cancellationToken = default)
+		public Task<TResult> ExecuteAsync<TState, TResult>(TState state, Func<DbContext, TState, CancellationToken, Task<TResult>> operation,
+			Func<DbContext, TState, CancellationToken, Task<ExecutionResult<TResult>>>? verifySucceeded,
+			CancellationToken cancellationToken = default)
 		{
 			return operation(this.DbContext, state, cancellationToken);
 		}

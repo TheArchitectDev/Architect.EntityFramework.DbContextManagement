@@ -70,7 +70,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 
 		protected bool ExtractState(IExecutionScope scope)
 		{
-			if (!(scope is IExecutionScope<bool> scopeWithBoolState))
+			if (scope is not IExecutionScope<bool> scopeWithBoolState)
 				throw new Exception($"{scope} does not have bool state.");
 			return scopeWithBoolState.State;
 		}

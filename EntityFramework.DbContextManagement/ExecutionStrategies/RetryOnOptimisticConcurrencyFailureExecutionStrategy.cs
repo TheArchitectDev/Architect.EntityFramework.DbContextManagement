@@ -39,7 +39,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 			this.WrappedStrategy = wrappedStrategy ?? throw new ArgumentNullException(nameof(wrappedStrategy));
 		}
 
-		public TResult Execute<TState, TResult>(TState state, Func<DbContext, TState, TResult> operation, Func<DbContext, TState, ExecutionResult<TResult>> verifySucceeded)
+		public TResult Execute<TState, TResult>(TState state, Func<DbContext, TState, TResult> operation, Func<DbContext, TState, ExecutionResult<TResult>>? verifySucceeded)
 		{
 			var result = this.ExecuteCore(async: false,
 				state: (Self: this, State: state, Operation: operation, VerifySucceeded: verifySucceeded),
@@ -49,7 +49,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 			// Local function that synchronously performs the operation and returns the result wrapped in a task
 			static Task<TResult> PerformSynchronously(RetryOnOptimisticConcurrencyFailureExecutionStrategy self,
-				TState state, Func<DbContext, TState, TResult> operation, Func<DbContext, TState, ExecutionResult<TResult>> verifySucceeded)
+				TState state, Func<DbContext, TState, TResult> operation, Func<DbContext, TState, ExecutionResult<TResult>>? verifySucceeded)
 			{
 				var result = self.WrappedStrategy.Execute(state, operation, verifySucceeded);
 				return Task.FromResult(result);
@@ -57,7 +57,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 		}
 
 		public Task<TResult> ExecuteAsync<TState, TResult>(TState state, Func<DbContext, TState, CancellationToken, Task<TResult>> operation,
-			Func<DbContext, TState, CancellationToken, Task<ExecutionResult<TResult>>> verifySucceeded, CancellationToken cancellationToken = default)
+			Func<DbContext, TState, CancellationToken, Task<ExecutionResult<TResult>>>? verifySucceeded, CancellationToken cancellationToken = default)
 		{
 			var result = this.ExecuteCore(async: true,
 				state: (Self: this, State: state, Operation: operation, VerifySucceeded: verifySucceeded, CancellationToken: cancellationToken),

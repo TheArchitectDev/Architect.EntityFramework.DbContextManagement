@@ -1,25 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyName>Architect.EntityFramework.DbContextManagement</AssemblyName>
-    <RootNamespace>Architect.EntityFramework.DbContextManagement</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<AssemblyName>Architect.EntityFramework.DbContextManagement</AssemblyName>
+		<RootNamespace>Architect.EntityFramework.DbContextManagement</RootNamespace>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
-    <!-- NoWarn: 1591=MissingXmlComments -->
-    <NoWarn>1573;1591</NoWarn>
-    <LangVersion>latest</LangVersion>
-    <Nullable>Enable</Nullable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<!-- CA1822: Instance member does not access instance data and can be marked as static -->
+		<!-- CS1573: Undocumented public symbol while -doc compiler option is used -->
+		<!-- CS1591: Missing XML comment for publicly visible type -->
+		<!-- CA1816: Dispose() should call GC.SuppressFinalize() -->
+		<!-- CA1068: CancellationToken parameters must come last -->
+		<NoWarn>CA1822,CS1573,CS1591,CA1816,CA1068</NoWarn>
+		<LangVersion>latest</LangVersion>
+		<Nullable>Enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <VersionPrefix>1.0.0</VersionPrefix>
-    <PackageReleaseNotes>
-    </PackageReleaseNotes>
-    <Description>
+	<PropertyGroup>
+		<VersionPrefix>1.0.1</VersionPrefix>
+		<PackageReleaseNotes>
+		</PackageReleaseNotes>
+		<Description>
+Release notes:
+
+1.0.1:
+- Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
+
+Description:
+
 Manage your DbContexts the right way.
 
 https://github.com/TheArchitectDev/Architect.EntityFramework.DbContextManagement
@@ -81,29 +91,29 @@ public class MyApplicationService
     }); // If no exceptions occurred and this scope was not nested in another, the transaction is committed asynchronously here
   }
 }
-    </Description>
-    <Copyright>The Architect</Copyright>
-    <Company>The Architect</Company>
-    <Authors>TheArchitectDev, Timovzl</Authors>
-    <RepositoryUrl>https://github.com/TheArchitectDev/Architect.AmbientContexts</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageTags>DbContext, DbContextScope, AmbientDbContext, EntityFramework, Entity, Framework, EF, Core, EfCore, AmbientContext, AmbientScope, ambient, context, scope, IoC, inversion, control, transaction, UnitOfWork, unit, work</PackageTags>
-    <PackageReleaseNotes>
-    </PackageReleaseNotes>
-  </PropertyGroup>
+		</Description>
+		<Copyright>The Architect</Copyright>
+		<Company>The Architect</Company>
+		<Authors>TheArchitectDev, Timovzl</Authors>
+		<RepositoryUrl>https://github.com/TheArchitectDev/Architect.AmbientContexts</RepositoryUrl>
+		<RepositoryType>Git</RepositoryType>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageTags>DbContext, DbContextScope, AmbientDbContext, EntityFramework, Entity, Framework, EF, Core, EfCore, AmbientContext, AmbientScope, ambient, context, scope, IoC, inversion, control, transaction, UnitOfWork, unit, work</PackageTags>
+		<PackageReleaseNotes>
+		</PackageReleaseNotes>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Architect.AmbientContexts" Version="1.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Architect.AmbientContexts" Version="1.1.1-*" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.0" />
+	</ItemGroup>
 
 </Project>

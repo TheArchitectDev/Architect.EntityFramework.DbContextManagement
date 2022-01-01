@@ -46,7 +46,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 			{
 				Assert.Null(scope.DbContext.Database.CurrentTransaction);
 
-				await scope.DbContext.SaveChangesAsync();
+				await scope.DbContext.SaveChangesAsync(ct);
 
 				Assert.NotNull(scope.DbContext.Database.CurrentTransaction);
 
@@ -60,8 +60,8 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 		{
 			await this.Execute(overload, this.Provider, async (scope, ct) =>
 			{
-				await ((TestDbContext)scope.DbContext).TestEntities.CountAsync();
-				await ((TestDbContext)scope.DbContext).TestEntities.FirstOrDefaultAsync();
+				await ((TestDbContext)scope.DbContext).TestEntities.CountAsync(cancellationToken: ct);
+				await ((TestDbContext)scope.DbContext).TestEntities.FirstOrDefaultAsync(cancellationToken: ct);
 
 				Assert.Null(scope.DbContext.Database.CurrentTransaction);
 
@@ -93,7 +93,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 			{
 				Assert.Null(scope.DbContext.Database.CurrentTransaction);
 
-				await scope.DbContext.Database.ExecuteSqlRawAsync("SELECT sqlite_version();");
+				await scope.DbContext.Database.ExecuteSqlRawAsync("SELECT sqlite_version();", cancellationToken: ct);
 
 				Assert.NotNull(scope.DbContext.Database.CurrentTransaction);
 
@@ -129,7 +129,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 
 				var entityToAdd = new TestEntity() { Id = 1 };
 				scope.DbContext.Add(entityToAdd);
-				await scope.DbContext.SaveChangesAsync();
+				await scope.DbContext.SaveChangesAsync(ct);
 
 				Assert.NotNull(scope.DbContext.Database.CurrentTransaction);
 
@@ -166,12 +166,12 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 			{
 				Assert.Null(scope.DbContext.Database.CurrentTransaction);
 
-				await scope.DbContext.Database.BeginTransactionAsync();
+				await scope.DbContext.Database.BeginTransactionAsync(ct);
 
 				var transaction = scope.DbContext.Database.CurrentTransaction;
 				Assert.NotNull(transaction);
 
-				await scope.DbContext.Database.ExecuteSqlRawAsync("SELECT sqlite_version();");
+				await scope.DbContext.Database.ExecuteSqlRawAsync("SELECT sqlite_version();", cancellationToken: ct);
 
 				Assert.Equal(transaction, scope.DbContext.Database.CurrentTransaction);
 
@@ -210,14 +210,14 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 			{
 				Assert.Null(scope.DbContext.Database.CurrentTransaction);
 
-				await scope.DbContext.Database.BeginTransactionAsync();
+				await scope.DbContext.Database.BeginTransactionAsync(ct);
 
 				var transaction = scope.DbContext.Database.CurrentTransaction;
 				Assert.NotNull(transaction);
 
 				var entityToAdd = new TestEntity() { Id = 1 };
 				scope.DbContext.Add(entityToAdd);
-				await scope.DbContext.SaveChangesAsync();
+				await scope.DbContext.SaveChangesAsync(ct);
 
 				Assert.Equal(transaction, scope.DbContext.Database.CurrentTransaction);
 
