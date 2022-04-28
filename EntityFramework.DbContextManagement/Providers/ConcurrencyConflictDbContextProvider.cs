@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +30,9 @@ namespace Architect.EntityFramework.DbContextManagement
 
 		private IDbContextProvider<TContext> WrappedProvider { get; }
 
+		/// <summary>
+		/// If true, any ongoing transaction is committed before the exception occurs, simulating an exception on commit where the commit has actually succeeded.
+		/// </summary>
 		private bool AfterCommit { get; }
 
 		/// <summary>
@@ -69,7 +72,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			{
 				var shouldThrow = this.ShouldThrow();
 				var result = task(scope);
-				ThrowConcurrencyException(shouldThrow);
+				this.ThrowConcurrencyException(shouldThrow);
 				return result;
 			});
 		}
@@ -80,7 +83,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			{
 				var shouldThrow = this.ShouldThrow();
 				var result = await task(scope, ct).ConfigureAwait(false);
-				ThrowConcurrencyException(shouldThrow);
+				this.ThrowConcurrencyException(shouldThrow);
 				return result;
 			});
 		}

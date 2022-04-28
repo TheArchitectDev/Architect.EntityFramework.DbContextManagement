@@ -2,11 +2,44 @@
 
 Manage your DbContexts the right way.
 
-The persistence layer or infrastructure layer uses the DbContext (e.g. from a repository). Controlling its scope and transaction lifetime, however, is ideally the reponsibility of the orchestrating layer (e.g. from an application service). This package adds that ability to Entity Framework Core 5.0.0 and up.
+- [TLDR](#tldr)
+- [Introduction](#introduction)
+- [Recommended Use](#recommended-use)
+- [Advantages](#advantages)
+  * [Advantages of Scoped Execution](#advantages-of-scoped-execution)
+- [Deeper Service Hierarchies](#deeper-service-hierarchies)
+- [Nested Scopes](#nested-scopes)
+  * [Controlling Scope Nesting](#controlling-scope-nesting)
+- [Options](#options)
+  * [DefaultScopeOption](#defaultscopeoption)
+  * [ExecutionStrategyOptions](#executionstrategyoptions)
+  * [AvoidFailureOnCommitRetries](#avoidfailureoncommitretries)
+- [Internal DbContext Types](#internal-dbcontext-types)
+- [Testing the Persistence Layer](#testing-the-persistence-layer)
+- [Unit Testing the Orchestrating Layer](#unit-testing-the-orchestrating-layer)
+- [Integration Testing the Orchestrating Layer](#integration-testing-the-orchestrating-layer)
+  * [Testing Retries](#testing-retries)
+- [Connection Resilience](#connection-resilience)
+- [Manual Use](#manual-use)
 
-The venerable Mehdi El Gueddari explains the benefits of this approach in his long and excellent [post](https://mehdi.me/ambient-dbcontext-in-ef6/). However, a truly good and up-to-date implementation was lacking. In fact, such an implementation has the potential to handle many more good practices out-of-the-box.
+## TLDR
 
-### Recommended Use
+The persistence or infrastructure layer uses the DbContext (e.g. from a repository). Controlling its scope and transaction lifetime, however, is ideally the reponsibility of the orchestrating layer (e.g. from an application service). This package adds that ability to Entity Framework Core 5.0.0 and up.
+
+## Introduction
+
+- Is the lifetime of your DbContext objects clearly visible and easy to control? <em>(Or is there a hidden dependency on `ServiceLifetime.Scoped` in the DI container?)</em>
+- Are you free to register your stateless services as singletons if you want to? <em>(Or do they get `ServiceLifetime.Scoped` forced upon them by a DbContext dependency?)</em>
+- Is your DbContext lifetime independent of your application type? For example, does the behavior stay the same between ASP.NET, Blazor Server, a console application, and integration tests?
+- Are write operations within a unit of work automatically kept within a single database transaction? Even if multiple calls to `SaveChangesAsync` are necessary?
+- Is [connection resilience](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency) (such as with `EnableRetryOnFailure`) automatically applied to each unit of work _as a whole_?
+- When using `RowVersion` or `ConcurrencyToken`, is it easy to implement correct retries?
+
+These are common issues when working with Entity Framework. As it turns out, all of them can be easily tackled when DbContext management is solved appropriately. This package provides a single, clean solution for DbContext management and these issues.
+
+The venerable Mehdi El Gueddari explains the benefits of ambiently scoped DbContexts in his long and excellent [post](https://mehdi.me/ambient-dbcontext-in-ef6/) on the subject. However, a truly good and up-to-date implementation was lacking. In fact, such an implementation has the potential to handle many more good practices out-of-the-box.
+
+## Recommended Use
 
 The recommended usage pattern, dubbed "scoped execution", comes with many additional advantages, [outlined below](#advantages-of-scoped-execution).
 
@@ -31,20 +64,20 @@ public class MyRepository : IMyRepository
 {
    // This computed property abstracts away how we obtain the DbContext
    private MyDbContext DbContext => this.DbContextAccessor.CurrentDbContext;
-   
+
    private IDbContextAccessor<MyDbContext> DbContextAccessor { get; }
    
    public OrderRepo(IDbContextAccessor<MyDbContext> dbContextAccessor)
    {
       // Inject an IDbContextAccessor
-      this.DbContextAccessor = dbContextAccessor ?? throw new ArgumentNullException(nameof(dbContextAccessor));
+      this.DbContextAccessor = dbContextAccessor;
    }
-   
+
    public Task<Order> GetOrderById(long id)
    {
       return this.DbContext.Orders.SingleOrDefaultAsync(o.Id == id);
    }
-   
+
    public Task AddOrder(order)
    {
       return this.DbContext.Orders.AddAsync(order);
@@ -54,20 +87,21 @@ public class MyRepository : IMyRepository
 
 So far, the above would throw, since we have not made a DbContext available.
 
-**Provide** a DbContext from the orchestrating layer (which eventually calls down into the persistence layer, directly or indirectly):
+**Provide** a DbContext from the orchestrating layer (which eventually calls down into the persistence layer, either directly or indirectly):
 
 ```cs
 public class MyApplicationService
 {
    private IDbContextProvider<MyDbContext> DbContextProvider { get; }
+
    private IMyRepository MyRepository { get; }
 
    public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, IMyRepository myRepository)
    {
       // Inject an IDbContextProvider
-      this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));
+      this.DbContextProvider = dbContextProvider;
       
-      this.MyRepository = myRepository ?? throw new ArgumentNullException(nameof(myRepository));
+      this.MyRepository = myRepository;
    }
 
    public async Task PerformSomeUnitOfWork()
@@ -76,18 +110,18 @@ public class MyApplicationService
       await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
       {
          // Until the end of this block, IDbContextAccessor can access the scoped DbContext
-         // It can do so from any number of invocations deep (not shown here)
+         // It can do so from any number of invocations deep
          await this.MyRepository.AddOrder(new Order());
          
          // If we have made modifications, we should save them
          // We could save here or as part of the repository methods, depending on our preference
          await executionScope.DbContext.SaveChangesAsync();
-      }); // If no exceptions occurred and this scope was not nested in another, the transaction is committed asynchronously here
+      }); // If the scope was not nested in another, the transaction is committed asynchronously here (unless an exception bubbled up or executionScope.Abort() was called)
    }
 }
 ```
 
-### Advantages
+## Advantages
 
 Managing DbContexts with `IDbContextProvider` and `IDbContextAccessor` provides several advantages:
 
@@ -99,7 +133,7 @@ Managing DbContexts with `IDbContextProvider` and `IDbContextAccessor` provides 
 - A unit of work may be nested. For example, a set of operations may explicitly require being transactional. If there is an encompassing transaction, they can join it; if not, they can have their own transaction.
 - It is possible to [keep the DbContext type `internal`](#internal-dbcontext-types) to the persistence layer, without compromising any of the above.
 
-#### Advantages of Scoped Execution
+### Advantages of Scoped Execution
 
 Additionally, the recommended [scoped execution](#recommended-use) (as opposed to [manual operation](#manual-use)) handles many good practices for us. It prevents developers from forgetting them, implementing them incorrectly, or having to write boilerplate code for them.
 
@@ -120,7 +154,7 @@ Additionally, the recommended [scoped execution](#recommended-use) (as opposed t
 - When using row versions or concurrency tokens for optimistic concurrency, retries can be configured to apply to concurrency conflicts as well, using `ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure`. By loading, modifying, and saving in a single code block, optimistic concurrency conflicts can be handled with zero effort.
    - This behavior is [easily tested](#testing-retries).
 
-### Deeper Service Hierarchies
+## Deeper Service Hierarchies
 
 The `IDbContextAccessor` can access the DbContext provided by the `IDbContextProvider` any number of invocations deep, without the need to pass any parameters.
 
@@ -131,10 +165,8 @@ public async Task PerformSomeUnitOfWork()
    await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
    {
       var order = await this.MyDomainService.GetExampleOrder();
-      
+
       // ...
-      
-      executionScope.Complete();
    });
 }
 
@@ -149,12 +181,12 @@ public Task<Order> GetOrderById(long id)
 {
    // As long as it is in scope, the ambient DbContext provided by the IDbContextProvider is visible to the IDbContextAccessor from anywhere
    var dbContext = this.DbContextAccessor.DbContext;
-   
+
    return dbContext.Orders.SingleOrDefaultAsync(o.Id == id);
 }
 ```
 
-### Nested Scopes
+## Nested Scopes
 
 Scopes may be nested. For example, a service may have repository-using behavior that can be invoked on its own. That behavior requires that a DbContext is provided. Perhaps it even requires being executed as a single transaction.
 
@@ -166,38 +198,34 @@ Both scenarios above are supported by default, because a scope joins the encompa
 public async Task AddMoneyTransfer(Account account, Transfer transfer)
 {
    account.Balance += transfer.Amount;
-   
+
    await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
    {
       // For demonstration purposes, say that the repository methods invoke SaveChangesAsync()
       await this.AccountRepo.UpdateAndSave(account);
       await this.TransferRepo.AddAndSave(transfer);
-      
-      executionScope.Complete();
-   });
+   }); // CommitTransactionAsync() is invoked when our scope ends, but only if we are the outermost scope
 }
 
 // This methods calls the above one, and does more
 public async Task TransferMoney(Account fromAccount, Account toAccount, Transfer transfer)
 {
    fromAccount.Balance -= transfer.Amount;
-   
+
    await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =>
    {
       // For demonstration purposes, say that the repository methods invoke SaveChangesAsync()
       await this.AccountRepo.UpdateAndSave(fromAccount);
-      
+
       // This method will use the DbContext we provided, and leave committing the transaction to us
       await this.AddMoneyTransfer(toAccount, transfer);
-      
-      executionScope.Complete();
-   }); // CommitTransactionAsync() is invoked when our scope ends, if we are the outermost scope
+   }); // CommitTransactionAsync() is invoked when our scope ends, but only if we are the outermost scope
 }
 ```
 
-If any inner scope fails to call `IExecutionScope.Complete()`, then any ongoing the transaction is rolled back, and any further database interaction with the DbContext results in a `TransactionAbortedException`. This helps avoid accidentally committing partial changes, which could otherwise leave the database in an inconsistent state.
+If any inner scope calls `IExecutionScope.Abort()` or lets an exception bubble up, then the entire ongoing transaction is rolled back, and any further database interaction with the DbContext results in a `TransactionAbortedException`. This helps avoid accidentally committing partial changes from the outer scope, which could otherwise leave the database in an inconsistent state.
 
-#### Controlling Scope Nesting
+### Controlling Scope Nesting
 
 Scope nesting can be controlled by explicitly passing an `AmbientScopeOption` to `ExecuteInDbContextScopeAsync()`, or by [changing the default value](#defaultscopeoption) on registration.
 
@@ -205,7 +233,7 @@ Scope nesting can be controlled by explicitly passing an `AmbientScopeOption` to
 - `AmbientScopeOption.NoNesting` throws an exception if an encompassing scope is present.
 - `AmbientScopeOption.ForceCreateNew` obscures any encompassing scopes, pretending they do not exist until the new scope is disposed.
 
-### Options
+## Options
 
 A number of options can be configured on registration:
 
@@ -217,7 +245,7 @@ services.AddDbContextScope<MyDbContext>(scope => scope
    .AvoidFailureOnCommitRetries(true));
 ```
 
-#### DefaultScopeOption
+### DefaultScopeOption
 
 [Scope nesting](#controlling-scope-nesting) is controlled by the `AmbientScopeOption`, optionally passed when the `IDbContextProvider` creates a scope. The default value can be configured like this:
 
@@ -225,7 +253,7 @@ services.AddDbContextScope<MyDbContext>(scope => scope
    .DefaultScopeOption(AmbientScopeOption.NoNesting)
 ```
 
-#### ExecutionStrategyOptions
+### ExecutionStrategyOptions
 
 Scoped execution always makes use of the DbContext's configured execution strategy. For example, if we use SQL Server with `EnableRetryOnFailure()`, its behavior is applied.
 
@@ -243,7 +271,7 @@ For full integration tests that get their dependencies from an `IServiceProvider
 
 The section on [integration tests](#integration-testing-the-orchestrating-layer) provides code samples.
 
-#### AvoidFailureOnCommitRetries
+### AvoidFailureOnCommitRetries
 
 Retrying after a failure on commit is [risky](#connection-resilience). By default, in the rare case where a failure on commit is the cause of an exception, this package prevents the retry, letting the exception to bubble up.
 
@@ -253,7 +281,7 @@ This recommended feature can be disabled as follows:
    .AvoidFailureOnCommitRetries(false)
 ```
 
-### Internal DbContext Types
+## Internal DbContext Types
 
 Sometimes it is desirable to have the visbility of a specific DbContext type set to `internal`, i.e. only visible to its own project. For example, we might have certain internal types that are exposed in `DbSet<T>` properties on the DbContext. Since `DbSet<T>` properties need to have a public getter to function (at least at the time of writing), keeping their types internal requires the DbContext itself to be internal as well.
 
@@ -302,7 +330,7 @@ public static IServiceCollection AddDatabaseInfrastructure(this IServiceCollecti
 
 The persistence layer still injects an `IDbContextAccessor<OrderDbContext>` as normal. The orchestrating layer, however, can now control things with an `IDbContextProvider<IOrderDatabase>` - note the generic type argument.
 
-### Testing the Persistence Layer
+## Testing the Persistence Layer
 
 When testing the layer that actually uses the DbContext, we will have a dependency on `IDbContextAccessor`. The implementation may use that dependency to try to obtain the DbContext.
 
@@ -321,7 +349,7 @@ hostBuilder.ConfigureServices(services =>
    services.AddSingleton<IDbContextAccessor<MyDbContext>>(dbContextAccessor));
 ```
 
-### Unit Testing the Orchestrating Layer
+## Unit Testing the Orchestrating Layer
 
 When we write unit tests on the orchestrating layer, the persistence code will be mocked out. As such, `IDbContextAccessor` will not be needed. However, the orchestrating layer will still have a dependency on `IDbContextProvider`. Moreover, if scoped execution is used, the flow of execution should resemble the production scenario.
 
@@ -345,7 +373,7 @@ var dbContextProvider = new MockDbContextProvider<MyDbContext>(myDbContextOrDbCo
 var applicationService = new ApplicationService(dbContextProvider, myRepo);
 ```
 
-### Integration Testing the Orchestrating Layer
+## Integration Testing the Orchestrating Layer
 
 For integration tests on the orchestrating layer, if we set things up correctly, there is nothing to do except register an in-memory database provider for Entity Framework. We recommend SQLite, as it can be used to integration test most scenarios in a very realistic way.
 
@@ -439,7 +467,7 @@ public class OrderApplicationServiceTests : IDisposable
 }
 ```
 
-#### Testing Retries
+### Testing Retries
 
 Additionally, when `ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure` is used, the retry behavior can be tested with integration tests. Doing so is recommended, since retries are more prone to bugs.
 
@@ -465,7 +493,7 @@ public async Task GetOrderShippingStatus_WithExistingOrder_ShouldReturnExpectedR
 }
 ```
 
-### Connection Resilience
+## Connection Resilience
 
 Entity Framework's [connection resilience guidelines](https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency) are highly recommended and work perfectly - if not more easily - with this package. Scoped execution provides the most suitable format for connection resilience.
 
@@ -482,7 +510,7 @@ If a method _does_ warrant a fully retrying implementation even for failure on c
 - If the commit was successful, return normally.
 - If the commit was unsuccessful, initiate a retry by throwing an exception of a type that will be retried by the provider. If `ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure` is used, throwing a `DbUpdateConcurrencyException` will have the same effect.
 
-### Manual Use
+## Manual Use
 
 If we merely want to control the DbContext, without the [advantages](#advantages-of-scoped-execution) provided by [scoped execution](#recommended-use), we can.
 
@@ -499,20 +527,20 @@ public class MyApplicationService
    public MyApplicationService(IDbContextProvider<MyDbContext> dbContextProvider, IMyRepository myRepository)
    {
       // Inject an IDbContextProvider
-      this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));
-      
-      this.MyRepository = myRepository ?? throw new ArgumentNullException(nameof(myRepository));
+      this.DbContextProvider = dbContextProvider;
+
+      this.MyRepository = myRepository;
    }
 
    public async Task PerformSomeUnitOfWork()
    {
       // Make a DbContext available until the scope is disposed
       await using var dbContextScope = this.DbContextProvider.CreateDbContextScope();
-      
+
       // IDbContextAccessor can access the scoped DbContext
       // It can do so from any number of invocations deep
       await this.MyRepository.AddOrder(new Order());
-      
+
       // If we made modifications, we should save them
       // This example chooses to save here rather than in the repository, but either way works
       await executionScope.DbContext.SaveChangesAsync();

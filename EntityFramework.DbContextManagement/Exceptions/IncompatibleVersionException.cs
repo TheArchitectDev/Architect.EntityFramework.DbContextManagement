@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Runtime.Serialization;
 
 namespace Architect.EntityFramework.DbContextManagement.Exceptions
 {
 	/// <summary>
-	/// An exception that indicates that the current <see cref="Architect.EntityFramework.DbContextManagement"/> version is incompatible with the current <see cref="Microsoft.EntityFrameworkCore"/> package.
+	/// An exception that indicates that the current <see cref="DbContextManagement"/> version is incompatible with the current <see cref="Microsoft.EntityFrameworkCore"/> package.
 	/// </summary>
 	internal sealed class IncompatibleVersionException : Exception
 	{

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -22,7 +22,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// A flag that indicates that optimistic concurrency failures should lead to retry attempts of the operation.
 		/// </para>
 		/// <para>
-		/// This is intended for use with <see cref="PropertyBuilder.IsRowVersion"/> or <see cref="PropertyBuilder.IsConcurrencyToken(bool)"/>.
+		/// This is intended for use with <see cref="PropertyBuilder.IsRowVersion"/> or <see cref="PropertyBuilder.IsConcurrencyToken(Boolean)"/>.
 		/// </para>
 		/// <para>
 		/// With this option, a <see cref="DbUpdateConcurrencyException"/> is treated as a reason to retry when working with scoped execution methods,

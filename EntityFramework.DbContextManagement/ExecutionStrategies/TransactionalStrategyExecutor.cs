@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -112,7 +112,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 			DbContextScope dbContextScope, UnitOfWork unitOfWork, DbContextScopeOptions options,
 			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{
-			// Note: When pooling is disabled, if a DbContext is disposed prematurely (not by its owner), things can always go horribly wrong
+			// Note: When pooling is enabled, if a DbContext is disposed prematurely (not by its owner), things can always go horribly wrong
 			// It is no different for this method
 			// We could protect against this by checking the lease count, but it is extreme developer error and it can still go wrong in the developer's own code
 
