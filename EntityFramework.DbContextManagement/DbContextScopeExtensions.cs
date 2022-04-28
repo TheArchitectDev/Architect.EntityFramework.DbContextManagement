@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.Providers;
@@ -145,7 +145,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// Registers a custom <see cref="DbContext"/> factory to use for scoped <see cref="DbContext"/> access.
 		/// </para>
 		/// <para>
-		/// Each invocation must produce a new instance (or effectively new if context pooling is used). Instances are disposed once they are no longer needed.
+		/// Each invocation must produce a new instance (or <em>effectively new</em> if context pooling is used). Instances are disposed once they are no longer needed.
 		/// </para>
 		/// </summary>
 		public static Options<TDbContext> DbContextFactory<TDbContext>(this Options<TDbContext> options, Func<TDbContext> dbContextFactory)

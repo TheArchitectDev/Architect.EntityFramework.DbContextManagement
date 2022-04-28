@@ -1,87 +1,32 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>netcoreapp3.1</TargetFramework>
 		<AssemblyName>Architect.EntityFramework.DbContextManagement</AssemblyName>
 		<RootNamespace>Architect.EntityFramework.DbContextManagement</RootNamespace>
 		<Nullable>Enable</Nullable>
-		<LangVersion>9</LangVersion>
+		<LangVersion>10</LangVersion>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>1.0.1</VersionPrefix>
+		<VersionPrefix>2.0.0</VersionPrefix>
 		<PackageReleaseNotes>
 		</PackageReleaseNotes>
 		<Description>
-Release notes:
-
-1.0.1:
-- Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
-
-Description:
-
 Manage your DbContexts the right way.
+
+The persistence or infrastructure layer uses the DbContext (e.g. from a repository). Controlling its scope and transaction lifetime, however, is ideally the reponsibility of the orchestrating layer (e.g. from an application service). This package adds that ability to Entity Framework Core 5.0.0 and up.
 
 https://github.com/TheArchitectDev/Architect.EntityFramework.DbContextManagement
 
-The persistence layer or infrastructure layer uses the DbContext (e.g. from a repository). Controlling its scope and transaction lifetime, however, is ideally the reponsibility of the orchestrating layer (e.g. from an application service). This package adds that ability to Entity Framework Core 5.0.0 and up.
+Release notes:
 
-// Register
-public void ConfigureServices(IServiceCollection services)
-{
-  services.AddPooledDbContextFactory&lt;MyDbContext&gt;(context =&gt;
-    context.UseSqlServer(connectionString, sqlServer =&gt; sqlServer.EnableRetryOnFailure()));
+2.0.0:
+- BREAKING: Now using AmbientContexts 2.0.0.
 
-  services.AddDbContextScope&lt;MyDbContext&gt;();
-}
-
-// Consume
-public class MyRepository : IMyRepository
-{
-  // Accesses the DbContext instance currently provided by the orchestrating layer
-  private MyDbContext DbContext =&gt; this.DbContextAccessor.CurrentDbContext;
-
-  private IDbContextAccessor&lt;MyDbContext&gt; DbContextAccessor { get; }
-
-  public OrderRepo(IDbContextAccessor&lt;MyDbContext&gt; dbContextAccessor)
-  {
-    this.DbContextAccessor = dbContextAccessor ?? throw new ArgumentNullException(nameof(dbContextAccessor));
-  }
-
-  public Task&lt;Order&gt; GetOrderById(long id)
-  {
-    return this.DbContext.Orders.SingleOrDefaultAsync(o.Id == id);
-  }
-}
-
-// Orchestrate
-public class MyApplicationService
-{
-  private IDbContextProvider&lt;MyDbContext&gt; DbContextProvider { get; }
-  private IMyRepository MyRepository { get; }
-
-  public MyApplicationService(IDbContextProvider&lt;MyDbContext&gt; dbContextProvider, IMyRepository myRepository)
-  {
-    this.DbContextProvider = dbContextProvider ?? throw new ArgumentNullException(nameof(dbContextProvider));      
-    this.MyRepository = myRepository ?? throw new ArgumentNullException(nameof(myRepository));
-  }
-
-  public async Task PerformSomeUnitOfWork()
-  {
-    // Provide a DbContext and execute a block of code within its scope
-    await this.DbContextProvider.ExecuteInDbContextScopeAsync(async executionScope =&gt;
-    {
-      // Until the end of this block, IDbContextAccessor can access the scoped DbContext
-      // It can do so from any number of invocations deep (not shown here)
-      await this.MyRepository.AddOrder(new Order());
-
-      // If we have made modifications, we should save them
-      // We could save here or as part of the repository methods, depending on our preference
-      await executionScope.DbContext.SaveChangesAsync();
-    }); // If no exceptions occurred and this scope was not nested in another, the transaction is committed asynchronously here
-  }
-}
+1.0.1:
+- Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
 		</Description>
 		<Copyright>The Architect</Copyright>
 		<Company>The Architect</Company>
@@ -102,7 +47,7 @@ public class MyApplicationService
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Architect.AmbientContexts" Version="1.1.1-*" />
+		<PackageReference Include="Architect.AmbientContexts" Version="2.0.0-*" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.0" />
 	</ItemGroup>

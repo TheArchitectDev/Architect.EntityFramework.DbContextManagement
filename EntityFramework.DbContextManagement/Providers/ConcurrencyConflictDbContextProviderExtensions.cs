@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,8 +46,8 @@ namespace Architect.EntityFramework.DbContextManagement
 			if (previousRegistration is null) throw new InvalidOperationException($"No {nameof(IDbContextProvider<TDbContextRepresentation>)} was registered that we could wrap.");
 			var implementationFactory = previousRegistration.ImplementationFactory ??
 				(previousRegistration.ImplementationInstance != null
-					? (Func<IServiceProvider, object>)(_ => previousRegistration.ImplementationInstance)
-					: (serviceProvider => ActivatorUtilities.CreateInstance(serviceProvider, previousRegistration.ImplementationType!)));
+					? _ => previousRegistration.ImplementationInstance
+					: serviceProvider => ActivatorUtilities.CreateInstance(serviceProvider, previousRegistration.ImplementationType!));
 
 			services.AddSingleton<IDbContextProvider<TDbContextRepresentation>>(CreateInstance);
 			services.AddSingleton<IDbContextProvider<TDbContext>>(CreateInstance);

@@ -46,8 +46,8 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Accessors
 
 		private TestDbContext CreateAndRememberDbContext()
 		{
-			DbContext = TestDbContext.Create();
-			return DbContext;
+			this.DbContext = TestDbContext.Create();
+			return this.DbContext;
 		}
 
 		public enum CreationType : byte
