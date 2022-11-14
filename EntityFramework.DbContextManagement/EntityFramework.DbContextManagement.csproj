@@ -22,6 +22,7 @@ Release notes:
 
 2.0.0:
 - BREAKING: Now using AmbientContexts 2.0.0.
+- MockDbContextProvider: Fixed a bug where nested scopes would not work as expected.
 
 1.0.1:
 - Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.

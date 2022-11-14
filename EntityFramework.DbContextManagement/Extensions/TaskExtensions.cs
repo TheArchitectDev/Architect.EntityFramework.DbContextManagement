@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -29,6 +29,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			switch (task.Status)
 			{
 				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
 					task.GetAwaiter().GetResult(); // Allow exceptions to be thrown
 					return default!; // Never reached
 				default:
