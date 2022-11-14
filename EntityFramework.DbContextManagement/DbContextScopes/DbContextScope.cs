@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.DbContextScopes;
@@ -27,7 +27,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// <summary>
 		/// Whether the scope has joined an outer scope.
 		/// </summary>
-		public bool IsNested => this.EffectiveParentScope != null;
+		public bool IsNested => this.EffectiveParentScope is not null;
 
 		private protected DbContextScope(AmbientScopeOption scopeOption)
 			: base(scopeOption)
@@ -150,7 +150,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		protected override void DisposeImplementation()
 		{
 			// If we are an effective root, we must dispose our UnitOfWork
-			if (this.EffectiveParentScope is null && this.UnitOfWork != null)
+			if (this.EffectiveParentScope is null && this.UnitOfWork is not null)
 				this.UnitOfWork.Dispose();
 		}
 
@@ -160,7 +160,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		protected override ValueTask DisposeAsyncImplementation()
 		{
 			// If we are an effective root, we must dispose our UnitOfWork
-			if (this.EffectiveParentScope is null && this.UnitOfWork != null)
+			if (this.EffectiveParentScope is null && this.UnitOfWork is not null)
 				return this.UnitOfWork.DisposeAsync();
 
 			return new ValueTask(Task.CompletedTask);

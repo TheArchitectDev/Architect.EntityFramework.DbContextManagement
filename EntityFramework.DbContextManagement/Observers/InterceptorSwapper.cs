@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -111,12 +111,12 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 			public static InterceptorAggregator<TInterceptor> GetAggregator(IInterceptors interceptors)
 			{
-				System.Diagnostics.Debug.Assert(interceptors != null);
+				System.Diagnostics.Debug.Assert(interceptors is not null);
 
 				if (AggregatorGetter is null)
 					SetAggregatorGetter(interceptors);
 
-				System.Diagnostics.Debug.Assert(AggregatorGetter != null);
+				System.Diagnostics.Debug.Assert(AggregatorGetter is not null);
 
 				return AggregatorGetter(interceptors);
 
@@ -125,7 +125,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 				{
 					lock (Lock)
 					{
-						if (AggregatorGetter != null) return;
+						if (AggregatorGetter is not null) return;
 
 						try
 						{
@@ -180,12 +180,12 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 			public static void SetInterceptors(InterceptorAggregator<TInterceptor> aggregator, TInterceptor[] interceptors)
 			{
-				System.Diagnostics.Debug.Assert(aggregator != null);
+				System.Diagnostics.Debug.Assert(aggregator is not null);
 
 				if (InterceptorsSetter is null)
 					SetInterceptorsSetter(aggregator);
 
-				System.Diagnostics.Debug.Assert(InterceptorsSetter != null);
+				System.Diagnostics.Debug.Assert(InterceptorsSetter is not null);
 
 				InterceptorsSetter(aggregator, interceptors);
 
@@ -194,7 +194,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 				{
 					lock (Lock)
 					{
-						if (InterceptorsSetter != null) return;
+						if (InterceptorsSetter is not null) return;
 
 						try
 						{

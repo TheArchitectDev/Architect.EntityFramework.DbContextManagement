@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
@@ -114,7 +114,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 		/// </summary>
 		private Task InterceptorMightPerformCustomQuery(bool async, DbCommand command, CancellationToken cancellationToken)
 		{
-			return !this.IsSaving && this.WillSaveChanges != null
+			return !this.IsSaving && this.WillSaveChanges is not null
 				? PerformAsync()
 				: Task.CompletedTask;
 

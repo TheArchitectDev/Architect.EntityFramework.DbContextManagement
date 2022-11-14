@@ -6,7 +6,6 @@
 		<AssemblyName>Architect.EntityFramework.DbContextManagement.Example</AssemblyName>
 		<RootNamespace>Architect.EntityFramework.DbContextManagement.Example</RootNamespace>
 		<ImplicitUsings>Enable</ImplicitUsings>
-		<LangVersion>10</LangVersion>
 		<IsPackable>False</IsPackable>
 	</PropertyGroup>
 

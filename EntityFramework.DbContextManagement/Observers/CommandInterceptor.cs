@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,8 +15,8 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 			Action willCreateCommand,
 			Func<bool, DbCommand, CancellationToken, Task> willExecuteNonQuery)
 		{
-			System.Diagnostics.Debug.Assert(willCreateCommand != null);
-			System.Diagnostics.Debug.Assert(willExecuteNonQuery != null);
+			System.Diagnostics.Debug.Assert(willCreateCommand is not null);
+			System.Diagnostics.Debug.Assert(willExecuteNonQuery is not null);
 
 			this.WillCreateCommand = willCreateCommand;
 			this.WillExecuteNonQuery = willExecuteNonQuery;

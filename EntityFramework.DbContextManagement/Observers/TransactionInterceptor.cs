@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +12,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 		public TransactionInterceptor(Action willStartTransaction)
 		{
-			System.Diagnostics.Debug.Assert(willStartTransaction != null);
+			System.Diagnostics.Debug.Assert(willStartTransaction is not null);
 
 			this.WillStartTransaction = willStartTransaction;
 		}

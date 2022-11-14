@@ -107,7 +107,7 @@ namespace Architect.EntityFramework.DbContextManagement
 		{
 			if (shouldThrow)
 			{
-				if (this.AfterCommit && DbContextScope<TDbContext>.Current.DbContext.Database.CurrentTransaction != null)
+				if (this.AfterCommit && DbContextScope<TDbContext>.Current.DbContext.Database.CurrentTransaction is not null)
 					DbContextScope<TDbContext>.Current.DbContext.Database.CommitTransaction();
 
 				throw new DbUpdateConcurrencyException("This is a simulated optimistic concurrency exception.");
