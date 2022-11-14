@@ -45,7 +45,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			var previousRegistration = services.LastOrDefault(descriptor => descriptor.ServiceType == typeof(IDbContextProvider<TDbContextRepresentation>));
 			if (previousRegistration is null) throw new InvalidOperationException($"No {nameof(IDbContextProvider<TDbContextRepresentation>)} was registered that we could wrap.");
 			var implementationFactory = previousRegistration.ImplementationFactory ??
-				(previousRegistration.ImplementationInstance != null
+				(previousRegistration.ImplementationInstance is not null
 					? _ => previousRegistration.ImplementationInstance
 					: serviceProvider => ActivatorUtilities.CreateInstance(serviceProvider, previousRegistration.ImplementationType!));
 

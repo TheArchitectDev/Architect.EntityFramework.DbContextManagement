@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +30,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 			set
 			{
 				// If trying to change an already-set value
-				if (this._isolationLevel != null && value != this._isolationLevel)
+				if (this._isolationLevel is not null && value != this._isolationLevel)
 					throw new InvalidOperationException($"Attempted to set the isolation level to {value} when it was already set to {this._isolationLevel}.");
 				this._isolationLevel = value;
 			}
@@ -155,7 +155,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		{
 			var exceptions = ImmutableList<Exception>.Empty;
 
-			if (this._dbContextObserver != null)
+			if (this._dbContextObserver is not null)
 			{
 				try
 				{
@@ -171,7 +171,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 				}
 			}
 
-			if (this._dbContext != null)
+			if (this._dbContext is not null)
 			{
 				try
 				{
@@ -199,7 +199,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 		{
 			using var exclusiveLock = this.GetLock();
 
-			if (this._dbContext != null) return this._dbContext;
+			if (this._dbContext is not null) return this._dbContext;
 
 			// Invoke the factory
 			var dbContext = this.DbContextFactory() ?? throw new ArgumentException("The injected factory produced a null DbContext.");
@@ -216,7 +216,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 			using var exclusiveLock = this.GetLock();
 
-			if (this._dbContextObserver != null) return this._dbContextObserver;
+			if (this._dbContextObserver is not null) return this._dbContextObserver;
 
 			var observer = new DbContextObserver(dbContext);
 

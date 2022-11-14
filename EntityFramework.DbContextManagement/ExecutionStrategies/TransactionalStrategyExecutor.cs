@@ -47,7 +47,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 			if (provider is null) throw new ArgumentNullException(nameof(provider));
 
 			// TODO Consideration: We could hide the ambient transaction if there is one
-			if (Transaction.Current != null)
+			if (Transaction.Current is not null)
 				throw new InvalidOperationException("An ambient TransactionScope has been detected. DbContextScope was nog designed to support TransactionScopes.");
 
 			// "Note that any contexts should be constructed within the code block to be retried. This ensures that we are starting with a clean state for each retry."

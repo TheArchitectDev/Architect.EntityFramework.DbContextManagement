@@ -40,7 +40,7 @@ namespace Architect.EntityFramework.DbContextManagement.Example
 			{
 				var existingOrder = await this.OrderRepository.LoadById(id);
 				
-				if (existingOrder != null) throw new DuplicateNameException($"Order {id} already exists.");
+				if (existingOrder is not null) throw new DuplicateNameException($"Order {id} already exists.");
 
 				// Demonstrate a custom query
 				// A transaction is automatically started here, since a custom query might make changes

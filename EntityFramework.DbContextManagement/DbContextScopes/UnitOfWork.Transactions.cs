@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -21,14 +21,14 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 		internal override async Task<bool> TryStartTransactionAsync(bool async, CancellationToken cancellationToken = default)
 		{
-			if (this.DbContext.Database.CurrentTransaction != null) return false;
+			if (this.DbContext.Database.CurrentTransaction is not null) return false;
 
 			using var exclusiveLock = this.GetLock();
 
-			if (this.DbContext.Database.CurrentTransaction != null) return false;
+			if (this.DbContext.Database.CurrentTransaction is not null) return false;
 
 			// TODO Consideration: We could hide the ambient transaction if there is one
-			if (Transaction.Current != null)
+			if (Transaction.Current is not null)
 				throw new InvalidOperationException("An ambient TransactionScope has been detected. DbContextScope was nog designed to support TransactionScopes.");
 
 			var isolationLevel = this.IsolationLevel;

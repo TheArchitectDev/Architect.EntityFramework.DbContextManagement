@@ -106,7 +106,7 @@ namespace Architect.EntityFramework.DbContextManagement
 			{
 				if (!options.Services.Any(descriptor => descriptor.ServiceType == typeof(IDbContextFactory<TDbContext>)))
 				{
-					throw new ArgumentException($"First call {nameof(EntityFrameworkServiceCollectionExtensions.AddPooledDbContextFactory)}() or {nameof(EntityFrameworkServiceCollectionExtensions.AddDbContextFactory)}(), or use the options to configure the {nameof(options.DbContexFactory)}.");
+					throw new ArgumentException($"First, call {nameof(EntityFrameworkServiceCollectionExtensions.AddPooledDbContextFactory)}() or {nameof(EntityFrameworkServiceCollectionExtensions.AddDbContextFactory)}(), or use the options to configure the {nameof(options.DbContexFactory)}.");
 				}
 			}
 

@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Architect.AmbientContexts;
+using Architect.EntityFramework.DbContextManagement.DbContextScopes;
 using Architect.EntityFramework.DbContextManagement.Dummies;
 using Architect.EntityFramework.DbContextManagement.ExecutionStrategies;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +22,9 @@ namespace Architect.EntityFramework.DbContextManagement
 	public class MockDbContextProvider<TContext, TDbContext> : DbContextProvider<TContext, TDbContext>
 		where TDbContext : DbContext
 	{
+		private static readonly ConditionalWeakTable<UnitOfWork, DummyUnitOfWork> DummyUnitsOfWorkByOriginalUnitsOfWork =
+			new ConditionalWeakTable<UnitOfWork, DummyUnitOfWork>();
+
 		public override DbContextScopeOptions Options { get; }
 
 		private DbContextFactory<TDbContext> DbContextFactory { get; }
@@ -109,8 +114,11 @@ namespace Architect.EntityFramework.DbContextManagement
 			AmbientScopeOption scopeOption,
 			TState state, Func<IExecutionScope<TState>, TResult> task)
 		{
-			return TransactionalStrategyExecutor.ExecuteInDbContextScopeAsync(this as IDbContextProvider<TContext>, scopeOption, state, default, ExecuteSynchronously,
-				async: false, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false)
+			return TransactionalStrategyExecutor.ExecuteInDbContextScopeAsync(
+				this as IDbContextProvider<TContext>, scopeOption, state, default, ExecuteSynchronously,
+				async: false,
+				getUnitOfWork: dbContextScope => GetDummyUnitOfWorkForOriginalUnitOfWork(dbContextScope.UnitOfWork),
+				shouldClearChangeTrackerOnRetry: false)
 				.RequireCompleted();
 
 			// Local function that executes the given task and returns a completed task
@@ -125,8 +133,19 @@ namespace Architect.EntityFramework.DbContextManagement
 			AmbientScopeOption scopeOption,
 			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{
-			return TransactionalStrategyExecutor.ExecuteInDbContextScopeAsync(this as IDbContextProvider<TContext>, scopeOption, state, cancellationToken, task,
-				async: true, getUnitOfWork: _ => new DummyUnitOfWork(), shouldClearChangeTrackerOnRetry: false);
+			return TransactionalStrategyExecutor.ExecuteInDbContextScopeAsync(
+				this as IDbContextProvider<TContext>, scopeOption, state, cancellationToken, task,
+				async: true,
+				getUnitOfWork: dbContextScope => GetDummyUnitOfWorkForOriginalUnitOfWork(dbContextScope.UnitOfWork),
+				shouldClearChangeTrackerOnRetry: false);
+		}
+
+		/// <summary>
+		/// Lets us provide our own <see cref="DummyUnitOfWork"/>, but still scoped in accordance with the original one.
+		/// </summary>
+		private static DummyUnitOfWork GetDummyUnitOfWorkForOriginalUnitOfWork(UnitOfWork original)
+		{
+			return DummyUnitsOfWorkByOriginalUnitsOfWork.GetOrCreateValue(original);
 		}
 	}
 

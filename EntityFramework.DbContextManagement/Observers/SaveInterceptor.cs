@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -12,8 +12,8 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 		public SaveInterceptor(Func<bool, CancellationToken, Task> willSaveChanges, Action<bool> didSaveChanges)
 		{
-			System.Diagnostics.Debug.Assert(willSaveChanges != null);
-			System.Diagnostics.Debug.Assert(didSaveChanges != null);
+			System.Diagnostics.Debug.Assert(willSaveChanges is not null);
+			System.Diagnostics.Debug.Assert(didSaveChanges is not null);
 
 			this.WillSaveChanges = willSaveChanges;
 			this.DidSaveChanges = didSaveChanges;

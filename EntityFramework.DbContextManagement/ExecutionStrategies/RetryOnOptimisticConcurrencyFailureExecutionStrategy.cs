@@ -1,5 +1,4 @@
-﻿using System;
-using System.Data;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +8,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 {
 	/// <summary>
 	/// <para>
-	/// Wraps a given <see cref="IExecutionStrategy"/> and adds the behavior of retrying on a optimistic concurrency conflicts, as detected by the <see cref="DBConcurrencyException"/>.
+	/// Wraps a given <see cref="IExecutionStrategy"/> and adds the behavior of retrying on a optimistic concurrency conflicts, as detected by the <see cref="DbUpdateConcurrencyException"/>.
 	/// </para>
 	/// <para>
 	/// Note that the retry attempt, just like that of other <see cref="IExecutionStrategy"/> types, does not create a fresh <see cref="DbContext"/>.

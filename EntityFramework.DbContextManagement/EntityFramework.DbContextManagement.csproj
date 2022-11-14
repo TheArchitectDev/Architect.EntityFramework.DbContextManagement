@@ -11,8 +11,6 @@
 
 	<PropertyGroup>
 		<VersionPrefix>2.0.0</VersionPrefix>
-		<PackageReleaseNotes>
-		</PackageReleaseNotes>
 		<Description>
 Manage your DbContexts the right way.
 
@@ -24,6 +22,7 @@ Release notes:
 
 2.0.0:
 - BREAKING: Now using AmbientContexts 2.0.0.
+- MockDbContextProvider: Fixed a bug where nested scopes would not work as expected.
 
 1.0.1:
 - Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
@@ -31,7 +30,7 @@ Release notes:
 		<Copyright>The Architect</Copyright>
 		<Company>The Architect</Company>
 		<Authors>TheArchitectDev, Timovzl</Authors>
-		<RepositoryUrl>https://github.com/TheArchitectDev/Architect.AmbientContexts</RepositoryUrl>
+		<RepositoryUrl>https://github.com/TheArchitectDev/Architect.EntityFramework.DbContextManagement</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>DbContext, DbContextScope, AmbientDbContext, EntityFramework, Entity, Framework, EF, Core, EfCore, AmbientContext, AmbientScope, ambient, context, scope, IoC, inversion, control, transaction, UnitOfWork, unit, work</PackageTags>
