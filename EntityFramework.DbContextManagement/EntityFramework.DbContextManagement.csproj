@@ -23,6 +23,7 @@ Release notes:
 2.0.0:
 - BREAKING: Now using AmbientContexts 2.0.0.
 - Added static DbContextScope&lt;TDbContext&gt;.HasDbContext, to match the feature set of IDbContextAccessor.
+- Retries now ensure that the connection is closed before retrying, to avoid the risk of leaking session state. (As with EF's DbContext disposal in general, this relies on the database provider's connection reset.)
 - MockDbContextProvider: Fixed a bug where nested scopes would not work as expected.
 
 1.0.1:
