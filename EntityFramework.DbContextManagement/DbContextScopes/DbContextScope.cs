@@ -108,6 +108,11 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </summary>
 		public static TDbContext CurrentDbContext => Current.DbContext;
 
+		/// <summary>
+		/// Returns whether an ambient <typeparamref name="TDbContext"/> is currently available.
+		/// </summary>
+		public static bool HasDbContext => GetAmbientScope(considerDefaultScope: false) is not null;
+
 		private new DbContextScope<TDbContext> EffectiveParentScope => (base.EffectiveParentScope as DbContextScope<TDbContext>)!;
 
 		/// <summary>

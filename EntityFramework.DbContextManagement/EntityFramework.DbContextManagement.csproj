@@ -22,6 +22,7 @@ Release notes:
 
 2.0.0:
 - BREAKING: Now using AmbientContexts 2.0.0.
+- Added static DbContextScope&lt;TDbContext&gt;.HasDbContext, to match the feature set of IDbContextAccessor.
 - MockDbContextProvider: Fixed a bug where nested scopes would not work as expected.
 
 1.0.1:

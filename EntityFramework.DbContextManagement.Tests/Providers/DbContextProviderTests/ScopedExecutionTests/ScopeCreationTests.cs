@@ -1,4 +1,4 @@
-﻿using Architect.AmbientContexts;
+using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.DbContextScopes;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -13,14 +13,19 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 		{
 			var accessor = new AmbientDbContextAccessor<TestDbContext>();
 
+			Assert.False(DbContextScope<TestDbContext>.HasDbContext);
+			Assert.Null(DbContextScope<TestDbContext>.CurrentOrDefault);
+
 			await this.Execute(overload, this.Provider, async (scope, ct) =>
 			{
+				Assert.True(DbContextScope<TestDbContext>.HasDbContext);
 				Assert.NotNull(DbContextScope<TestDbContext>.CurrentOrDefault);
 				Assert.Equal(DbContextScope<TestDbContext>.CurrentDbContext, accessor.CurrentDbContext);
 
 				if (this.IsAsync(overload))
 					await Task.Delay(TimeSpan.FromTicks(1), ct);
 
+				Assert.True(DbContextScope<TestDbContext>.HasDbContext);
 				Assert.NotNull(DbContextScope<TestDbContext>.CurrentOrDefault);
 				Assert.Equal(DbContextScope<TestDbContext>.CurrentDbContext, accessor.CurrentDbContext);
 
@@ -45,6 +50,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 				return true;
 			});
 
+			Assert.False(DbContextScope<TestDbContext>.HasDbContext);
 			Assert.Null(DbContextScope<TestDbContext>.CurrentOrDefault);
 			Assert.Throws<InvalidOperationException>(() => accessor.CurrentDbContext);
 		}

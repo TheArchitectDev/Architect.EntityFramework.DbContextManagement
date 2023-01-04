@@ -12,7 +12,7 @@ namespace Architect.EntityFramework.DbContextManagement
 	internal sealed class AmbientDbContextAccessor<TDbContext> : IDbContextAccessor<TDbContext>
 		where TDbContext : DbContext
 	{
-		public bool HasDbContext => DbContextScope<TDbContext>.CurrentOrDefault is not null;
+		public bool HasDbContext => DbContextScope<TDbContext>.HasDbContext;
 
 		/// <summary>
 		/// <para>
