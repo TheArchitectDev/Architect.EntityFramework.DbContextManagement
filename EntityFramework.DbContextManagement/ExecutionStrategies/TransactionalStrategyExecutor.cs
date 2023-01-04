@@ -52,7 +52,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 			// "Note that any contexts should be constructed within the code block to be retried. This ensures that we are starting with a clean state for each retry."
 			// https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/retry-logic
-			// However, since EF Core 5, we have confirmation that we may reuse the DbContext, and we should call DbContext.ChangeTracker.Clear() before each retry:
+			// However, since EF Core 5, we have confirmation that we may reuse the DbContext, and we should call DbContext.ChangeTracker.Clear() (and close the connection, because of session state) before each retry:
 			// https://github.com/dotnet/efcore/discussions/22422#discussioncomment-84480
 			var dbContextScope = provider.CreateDbContextScope(scopeOption);
 
@@ -162,7 +162,10 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 				// Reset the DbContext so that potential retries start fresh
 				// We created the DbContext (because this method is only invoked with a root DbContextScope), so we are free to clear it
 				if (shouldClearChangeTrackerOnRetry)
+				{
 					dbContext.ChangeTracker.Clear();
+					await dbContext.Database.CloseConnectionAsync().ConfigureAwait(false);
+				}
 
 				// Allow reuse
 				unitOfWork.UndoInvalidation();

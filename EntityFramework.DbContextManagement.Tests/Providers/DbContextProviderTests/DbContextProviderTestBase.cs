@@ -1,4 +1,4 @@
-﻿namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContextProviderTests
+namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContextProviderTests
 {
 	public abstract class DbContextProviderTestBase : IDisposable
 	{
@@ -13,7 +13,7 @@
 			new RegularDbContextProvider<TestDbContext>(this.TestDbContextFactory, this.OptionsBuilder.Build());
 		private DbContextProvider<TestDbContext> _provider;
 
-		private protected TestDbContextFactory TestDbContextFactory { get; } = new TestDbContextFactory(new UndisposableSqliteConnection("Filename=:memory:"));
+		private protected TestDbContextFactory TestDbContextFactory { get; } = new TestDbContextFactory();
 
 		public void Dispose()
 		{

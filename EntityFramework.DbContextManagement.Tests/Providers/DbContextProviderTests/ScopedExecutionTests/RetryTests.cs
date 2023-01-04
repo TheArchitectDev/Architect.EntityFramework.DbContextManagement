@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using System.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Xunit;
 
@@ -145,12 +146,15 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 
 		[Theory]
 		[MemberData(nameof(ScopedExecutionTestBase.GetOverloads))]
-		public async Task WithExceptionOnFirstAttempt_ShouldGetFreshChangeTracker(Overload overload)
+		public async Task WithExceptionOnFirstAttempt_ShouldGetFreshChangeTrackerAndSession(Overload overload)
 		{
 			var attemptCount = 0;
 
 			await this.Execute(overload, this.Provider, (scope, ct) =>
 			{
+				// Connection should start closed, especially on retries
+				Assert.Equal(ConnectionState.Closed, scope.DbContext.Database.GetDbConnection().State);
+
 				// Add and forget the entity
 				var entityToInsert = new TestEntity() { Id = 1 };
 				scope.DbContext.Add(entityToInsert);
@@ -168,6 +172,8 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 
 				return Task.FromResult(true);
 			});
+
+			Assert.Equal(2, attemptCount);
 		}
 	}
 }
