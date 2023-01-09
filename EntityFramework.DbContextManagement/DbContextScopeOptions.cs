@@ -1,8 +1,11 @@
-﻿using System;
+using System;
 using Architect.AmbientContexts;
 
 namespace Architect.EntityFramework.DbContextManagement
 {
+	/// <summary>
+	/// Contains configuration for a <see cref="DbContextScope"/>.
+	/// </summary>
 	public sealed class DbContextScopeOptions
 	{
 		public static DbContextScopeOptions Default { get; } = new DbContextScopeOptionsBuilder().Build();

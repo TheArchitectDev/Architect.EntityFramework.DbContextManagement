@@ -26,6 +26,16 @@ namespace Architect.EntityFramework.DbContextManagement.Tests
 			this.KeepAliveConnection.Dispose();
 		}
 
+		/// <summary>
+		/// Attempts to reset the database by closing (and then reopening) the <see cref="KeepAliveConnection"/>.
+		/// This only works if all other connections to the same database are closed as well.
+		/// </summary>
+		public void ResetDatabase()
+		{
+			this.KeepAliveConnection.Close();
+			this.KeepAliveConnection.Open();
+		}
+
 		public TestDbContext CreateDbContext()
 		{
 			var result = TestDbContext.Create(this.ConnectionString);

@@ -143,17 +143,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 				// If we were completed, commit the ongoing transaction, if any
 				if (isExecutionScopeCompleted)
-				{
-					try
-					{
-						await unitOfWork.TryCommitTransactionAsync(async, cancellationToken).ConfigureAwait(false);
-					}
-					catch (Exception e) when (options.AvoidFailureOnCommitRetries)
-					{
-						// TODO Enhancement: Use interceptors to avoid retry on manual commits as well? But might also be implemented by EF: https://github.com/dotnet/efcore/issues/22904#issuecomment-705743508
-						throw new Exception("The operation failed on commit. Since it is possible that the commit succeeded, potential retries were avoided.", e);
-					}
-				}
+					await unitOfWork.TryCommitTransactionAsync(async, cancellationToken).ConfigureAwait(false);
 
 				return result;
 			}

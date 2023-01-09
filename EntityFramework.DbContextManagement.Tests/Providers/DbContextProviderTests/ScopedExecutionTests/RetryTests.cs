@@ -1,5 +1,8 @@
 using System.Data;
+using System.Data.Common;
+using Architect.EntityFramework.DbContextManagement.Observers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage;
 using Xunit;
 
@@ -7,6 +10,22 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 {
 	public class RetryTests : ScopedExecutionTestBase
 	{
+		private sealed class CommitInterceptor : DbTransactionInterceptor
+		{
+			private Action TransactionWillCommit { get; }
+
+			public CommitInterceptor(Action transactionWillCommit)
+			{
+				this.TransactionWillCommit = transactionWillCommit;
+			}
+
+			public override InterceptionResult TransactionCommitting(DbTransaction transaction, TransactionEventData eventData, InterceptionResult result)
+			{
+				this.TransactionWillCommit();
+				return base.TransactionCommitting(transaction, eventData, result);
+			}
+		}
+
 		public RetryTests()
 		{
 			this.OptionsBuilder.ExecutionStrategyOptions |= ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure;
@@ -133,7 +152,7 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 				var entityToInsert = new TestEntity() { Id = 1 };
 				scope.DbContext.Add(entityToInsert);
 				scope.DbContext.SaveChanges();
-				
+
 				// The exceptions that cause a retry may cause the current scope to abort
 				// If the abort were carried across retries, attempts to use the DbContext during the retries would fail
 				scope.Abort();
@@ -174,6 +193,63 @@ namespace Architect.EntityFramework.DbContextManagement.Tests.Providers.DbContex
 			});
 
 			Assert.Equal(2, attemptCount);
+		}
+
+		[Theory]
+		[MemberData(nameof(ScopedExecutionTestBase.GetOverloads))]
+		public async Task WithExceptionOnScopeCommit_ShouldThrowAndNotRetry(Overload overload)
+		{
+			var attemptCount = 0;
+
+			var exception = await Assert.ThrowsAsync<IOException>(() => this.Execute(overload, this.Provider, (scope, ct) =>
+			{
+				attemptCount++;
+
+				var entityToInsert = new TestEntity() { Id = 1 };
+				scope.DbContext.Add(entityToInsert);
+				scope.DbContext.SaveChanges();
+
+				// Closed connection without EF's knowledge causes exception on commit
+				scope.DbContext.Database.GetDbConnection().Close();
+				this.TestDbContextFactory.ResetDatabase();
+
+				return Task.FromResult(true);
+			})); // Scope attempts to commit here
+
+			// Should not have retried, because "failure on commit" retries can cause duplicate effects
+			Assert.Equal(1, attemptCount);
+
+			Assert.Contains("The operation failed on commit.", exception.Message);
+			Assert.IsType<InvalidOperationException>(exception.InnerException);
+		}
+
+		[Theory]
+		[MemberData(nameof(ScopedExecutionTestBase.GetOverloads))]
+		public async Task WithExceptionOnManualCommit_ShouldThrowAndNotRetry(Overload overload)
+		{
+			var attemptCount = 0;
+
+			var exception = await Assert.ThrowsAsync<IOException>(() => this.Execute(overload, this.Provider, (scope, ct) =>
+			{
+				using var interceptorSwapper = new InterceptorSwapper<IDbTransactionInterceptor>(scope.DbContext, new CommitInterceptor(
+					() => throw new InvalidDataException()));
+
+				attemptCount++;
+
+				var entityToInsert = new TestEntity() { Id = 1 };
+				scope.DbContext.Add(entityToInsert);
+				scope.DbContext.SaveChanges();
+
+				scope.DbContext.Database.CommitTransaction();
+
+				return Task.FromResult(true);
+			}));
+
+			// Should not have retried, because "failure on commit" retries can cause duplicate effects
+			Assert.Equal(1, attemptCount);
+
+			Assert.Contains("The operation failed on commit.", exception.Message);
+			Assert.IsType<InvalidDataException>(exception.InnerException);
 		}
 	}
 }

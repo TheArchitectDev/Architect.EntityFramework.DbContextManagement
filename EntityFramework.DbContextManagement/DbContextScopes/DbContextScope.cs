@@ -17,11 +17,14 @@ namespace Architect.EntityFramework.DbContextManagement
 	/// </summary>
 	public abstract class DbContextScope : AsyncAmbientScope<DbContextScope>
 	{
+		public DbContextScopeOptions Options { get; }
+
 		/// <summary>
 		/// The <see cref="Microsoft.EntityFrameworkCore.DbContext"/> available in the current scope.
 		/// It is shared with any joined parent and child scopes.
 		/// </summary>
 		public abstract DbContext DbContext { get; }
+
 		internal abstract UnitOfWork UnitOfWork { get; }
 
 		/// <summary>
@@ -29,9 +32,10 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </summary>
 		public bool IsNested => this.EffectiveParentScope is not null;
 
-		private protected DbContextScope(AmbientScopeOption scopeOption)
+		private protected DbContextScope(AmbientScopeOption scopeOption, DbContextScopeOptions? options = null)
 			: base(scopeOption)
 		{
+			this.Options = options ?? DbContextScopeOptions.Default;
 		}
 
 		/// <summary>
@@ -40,10 +44,11 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </summary>
 		public static DbContextScope<TDbContext> Create<TDbContext>(
 			IDbContextFactory<TDbContext> dbContextFactory,
-			AmbientScopeOption scopeOption)
+			AmbientScopeOption scopeOption,
+			DbContextScopeOptions? options = null)
 			where TDbContext : DbContext
 		{
-			return Create(dbContextFactory.CreateDbContext, scopeOption);
+			return Create(dbContextFactory.CreateDbContext, scopeOption, options);
 		}
 
 		/// <summary>
@@ -52,10 +57,11 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// </summary>
 		public static DbContextScope<TDbContext> Create<TDbContext>(
 			Func<TDbContext> dbContextFactory,
-			AmbientScopeOption scopeOption)
+			AmbientScopeOption scopeOption,
+			DbContextScopeOptions? options = null)
 			where TDbContext : DbContext
 		{
-			return new DbContextScope<TDbContext>(dbContextFactory, scopeOption);
+			return new DbContextScope<TDbContext>(dbContextFactory, scopeOption, options);
 		}
 	}
 
@@ -66,7 +72,7 @@ namespace Architect.EntityFramework.DbContextManagement
 	public abstract class TypedDbContextScope<TDbContext> : DbContextScope
 		where TDbContext : DbContext
 	{
-		// By overriding in an intermediate class we can 
+		// By the base property overriding in an intermediate class, we can obscure it behind a "new" (differently-typed) one in a subclass, yet always return the same value
 		public sealed override DbContext DbContext => (this as DbContextScope<TDbContext>)!.DbContext;
 		internal sealed override UnitOfWork UnitOfWork => (this as DbContextScope<TDbContext>)!.UnitOfWork;
 
@@ -74,8 +80,8 @@ namespace Architect.EntityFramework.DbContextManagement
 		/// Only accessible within this package.
 		/// Will only be invoked by <see cref="DbContextScope{TDbContext}"/>.
 		/// </summary>
-		private protected TypedDbContextScope(AmbientScopeOption scopeOption)
-			: base(scopeOption)
+		private protected TypedDbContextScope(AmbientScopeOption scopeOption, DbContextScopeOptions? options = null)
+			: base(scopeOption, options)
 		{
 			System.Diagnostics.Debug.Assert(this is DbContextScope<TDbContext>);
 		}
@@ -131,15 +137,16 @@ namespace Architect.EntityFramework.DbContextManagement
 
 		internal DbContextScope(
 			Func<TDbContext> dbContextFactory,
-			AmbientScopeOption scopeOption)
-			: base(scopeOption)
+			AmbientScopeOption scopeOption,
+			DbContextScopeOptions? options = null)
+			: base(scopeOption, options)
 		{
 			// Activate, gaining access to the potential parent scope
 			this.Activate();
 
 			try
 			{
-				this.UnitOfWork = this.EffectiveParentScope?.UnitOfWork ?? new UnitOfWork<TDbContext>(dbContextFactory);
+				this.UnitOfWork = this.EffectiveParentScope?.UnitOfWork ?? new UnitOfWork<TDbContext>(dbContextFactory, this.Options);
 			}
 			catch
 			{

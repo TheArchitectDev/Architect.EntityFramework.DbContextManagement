@@ -125,11 +125,14 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 		private Func<TDbContext> DbContextFactory { get; }
 
-		public UnitOfWork(Func<TDbContext> dbContextFactory)
+		public DbContextScopeOptions Options { get; }
+
+		public UnitOfWork(Func<TDbContext> dbContextFactory, DbContextScopeOptions options)
 		{
 			this._lock = new UltralightLock<UnitOfWork<TDbContext>>(this, self => ref self._lock);
 
 			this.DbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+			this.Options = options;
 		}
 
 		public void Dispose()
@@ -218,7 +221,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 
 			if (this._dbContextObserver is not null) return this._dbContextObserver;
 
-			var observer = new DbContextObserver(dbContext);
+			var observer = new DbContextObserver(dbContext, this.Options);
 
 			try
 			{

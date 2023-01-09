@@ -95,7 +95,7 @@ namespace Architect.EntityFramework.DbContextManagement
 
 		public override DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
 		{
-			var result = DbContextScope.Create(this.DbContextFactory, scopeOption ?? this.Options.DefaultScopeOption);
+			var result = DbContextScope.Create(this.DbContextFactory, scopeOption ?? this.Options.DefaultScopeOption, this.Options);
 			return result;
 		}
 

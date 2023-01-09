@@ -38,7 +38,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 		private InterceptorSwapper<IDbCommandInterceptor> CommandInterceptorSwapper { get; }
 		private InterceptorSwapper<IDbTransactionInterceptor> TransactionInterceptorSwapper { get; }
 
-		public DbContextObserver(DbContext dbContext)
+		public DbContextObserver(DbContext dbContext, DbContextScopeOptions options)
 		{
 			this.DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
@@ -51,7 +51,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 					this.CommandInterceptorSwapper = new InterceptorSwapper<IDbCommandInterceptor>(this.DbContext,
 						new CommandInterceptor(this.InterceptorWillCreateCommand, this.InterceptorMightPerformCustomQuery));
 					this.TransactionInterceptorSwapper = new InterceptorSwapper<IDbTransactionInterceptor>(this.DbContext,
-						new TransactionInterceptor(this.InterceptorWillStartTransaction));
+						new TransactionInterceptor(options, this.InterceptorWillStartTransaction));
 				}
 				catch (Exception e)
 				{

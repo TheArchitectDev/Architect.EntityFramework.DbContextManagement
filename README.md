@@ -273,7 +273,7 @@ The section on [integration tests](#integration-testing-the-orchestrating-layer)
 
 ### AvoidFailureOnCommitRetries
 
-Retrying after a failure on commit is [risky](#connection-resilience). By default, in the rare case where a failure on commit is the cause of an exception, this package prevents the retry, letting the exception to bubble up.
+Retrying after a failure on commit is [risky](#connection-resilience). It risks duplicate effects if the original commit turns out to have actually succeeded. By default, in the rare case where a failure on commit is the cause of an exception, scoped execution prevents the retry, letting the exception to bubble up wrapped in an `IOException`.
 
 This recommended feature can be disabled as follows:
 

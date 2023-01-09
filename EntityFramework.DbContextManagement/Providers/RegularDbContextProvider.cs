@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.Providers;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +27,7 @@ namespace Architect.EntityFramework.DbContextManagement
 
 		public override DbContextScope CreateDbContextScope(AmbientScopeOption? scopeOption = null)
 		{
-			var dbContextScope = DbContextScope.Create(this.DbContextFactory, scopeOption ?? this.Options.DefaultScopeOption);
+			var dbContextScope = DbContextScope.Create(this.DbContextFactory, scopeOption ?? this.Options.DefaultScopeOption, this.Options);
 			return dbContextScope;
 		}
 	}
