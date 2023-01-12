@@ -71,9 +71,9 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 				return async
 					? await executionStrategy.ExecuteAsync(
-						ct => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, ct, task), cancellationToken).ConfigureAwait(false)
+						ct => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, state, ct, task), cancellationToken).ConfigureAwait(false)
 					: executionStrategy.Execute(
-						() => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, cancellationToken: default, task).RequireCompleted());
+						() => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, state, cancellationToken: default, task).RequireCompleted());
 			}
 			finally
 			{
@@ -109,7 +109,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 		}
 
 		private static async Task<TResult> PerformScoped<TState, TResult>(bool async, bool shouldClearChangeTrackerOnRetry,
-			DbContextScope dbContextScope, UnitOfWork unitOfWork, DbContextScopeOptions options,
+			DbContextScope dbContextScope, UnitOfWork unitOfWork,
 			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{
 			// Note: When pooling is enabled, if a DbContext is disposed prematurely (not by its owner), things can always go horribly wrong
