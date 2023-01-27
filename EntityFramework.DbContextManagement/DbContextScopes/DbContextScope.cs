@@ -72,7 +72,7 @@ namespace Architect.EntityFramework.DbContextManagement
 	public abstract class TypedDbContextScope<TDbContext> : DbContextScope
 		where TDbContext : DbContext
 	{
-		// By the base property overriding in an intermediate class, we can obscure it behind a "new" (differently-typed) one in a subclass, yet always return the same value
+		// By overriding the base property in an intermediate class, we can obscure it behind a "new" (differently-typed) one in a subclass, yet always return the same value
 		public sealed override DbContext DbContext => (this as DbContextScope<TDbContext>)!.DbContext;
 		internal sealed override UnitOfWork UnitOfWork => (this as DbContextScope<TDbContext>)!.UnitOfWork;
 
