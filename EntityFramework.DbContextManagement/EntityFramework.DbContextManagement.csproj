@@ -22,7 +22,12 @@ Release notes:
 
 2.0.0:
 - BREAKING: Now using AmbientContexts 2.0.0.
+- Semi-breaking: Failure on commit (extremely rare) now throws IOException instead of Exception.
+- Added static DbContextScope&lt;TDbContext&gt;.HasDbContext, to match the feature set of IDbContextAccessor.
+- Retries now ensure that the connection is closed before retrying, to avoid the risk of leaking session state. (As with EF's DbContext disposal in general, this relies on the database provider's connection reset.)
+- Scoped execution now protects against dangerous "failure on commit" retries even on manual commits (rather than just on IExecutionScope's implicit commit).
 - MockDbContextProvider: Fixed a bug where nested scopes would not work as expected.
+- MockDbContextProvider: Fixed a bug where soft attempts to roll back a transaction when there was none could cause an unintended TransactionAbortedException.
 
 1.0.1:
 - Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.

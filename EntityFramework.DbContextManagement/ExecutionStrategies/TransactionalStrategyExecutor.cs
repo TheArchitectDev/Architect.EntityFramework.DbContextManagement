@@ -52,7 +52,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 			// "Note that any contexts should be constructed within the code block to be retried. This ensures that we are starting with a clean state for each retry."
 			// https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/retry-logic
-			// However, since EF Core 5, we have confirmation that we may reuse the DbContext, and we should call DbContext.ChangeTracker.Clear() before each retry:
+			// However, since EF Core 5, we have confirmation that we may reuse the DbContext, and we should call DbContext.ChangeTracker.Clear() (and close the connection, because of session state) before each retry:
 			// https://github.com/dotnet/efcore/discussions/22422#discussioncomment-84480
 			var dbContextScope = provider.CreateDbContextScope(scopeOption);
 
@@ -71,9 +71,9 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 				return async
 					? await executionStrategy.ExecuteAsync(
-						ct => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, ct, task), cancellationToken).ConfigureAwait(false)
+						ct => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, state, ct, task), cancellationToken).ConfigureAwait(false)
 					: executionStrategy.Execute(
-						() => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, provider.Options, state, cancellationToken: default, task).RequireCompleted());
+						() => PerformScoped(async, shouldClearChangeTrackerOnRetry, dbContextScope, unitOfWork, state, cancellationToken: default, task).RequireCompleted());
 			}
 			finally
 			{
@@ -109,7 +109,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 		}
 
 		private static async Task<TResult> PerformScoped<TState, TResult>(bool async, bool shouldClearChangeTrackerOnRetry,
-			DbContextScope dbContextScope, UnitOfWork unitOfWork, DbContextScopeOptions options,
+			DbContextScope dbContextScope, UnitOfWork unitOfWork,
 			TState state, CancellationToken cancellationToken, Func<IExecutionScope<TState>, CancellationToken, Task<TResult>> task)
 		{
 			// Note: When pooling is enabled, if a DbContext is disposed prematurely (not by its owner), things can always go horribly wrong
@@ -143,17 +143,7 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 
 				// If we were completed, commit the ongoing transaction, if any
 				if (isExecutionScopeCompleted)
-				{
-					try
-					{
-						await unitOfWork.TryCommitTransactionAsync(async, cancellationToken).ConfigureAwait(false);
-					}
-					catch (Exception e) when (options.AvoidFailureOnCommitRetries)
-					{
-						// TODO Enhancement: Use interceptors to avoid retry on manual commits as well? But might also be implemented by EF: https://github.com/dotnet/efcore/issues/22904#issuecomment-705743508
-						throw new Exception("The operation failed on commit. Since it is possible that the commit succeeded, potential retries were avoided.", e);
-					}
-				}
+					await unitOfWork.TryCommitTransactionAsync(async, cancellationToken).ConfigureAwait(false);
 
 				return result;
 			}
@@ -162,7 +152,10 @@ namespace Architect.EntityFramework.DbContextManagement.ExecutionStrategies
 				// Reset the DbContext so that potential retries start fresh
 				// We created the DbContext (because this method is only invoked with a root DbContextScope), so we are free to clear it
 				if (shouldClearChangeTrackerOnRetry)
+				{
 					dbContext.ChangeTracker.Clear();
+					await dbContext.Database.CloseConnectionAsync().ConfigureAwait(false);
+				}
 
 				// Allow reuse
 				unitOfWork.UndoInvalidation();

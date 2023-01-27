@@ -56,8 +56,6 @@ namespace Architect.EntityFramework.DbContextManagement.Dummies
 
 		internal override bool TryRollBackTransaction()
 		{
-			if (this.ThrowsTransactionAborted) ThrowTransactionAborted();
-
 			var result = this.IsInTransaction;
 			this.IsInTransaction = false;
 			return result;

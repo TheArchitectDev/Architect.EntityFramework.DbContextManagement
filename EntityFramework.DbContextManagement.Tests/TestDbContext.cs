@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Data.Common;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Architect.EntityFramework.DbContextManagement.Tests
@@ -10,23 +9,18 @@ namespace Architect.EntityFramework.DbContextManagement.Tests
 
 		public static TestDbContext Create()
 		{
-			var result = new TestDbContext();
+			var result = new TestDbContext("Filename=:memory:");
 			return result;
 		}
 
-		public static TestDbContext Create(DbConnection dbConnection)
+		public static TestDbContext Create(string connectionString)
 		{
-			var result = new TestDbContext(dbConnection);
+			var result = new TestDbContext(connectionString);
 			return result;
 		}
 
-		private TestDbContext()
-			: base(new DbContextOptionsBuilder().UseSqlite("Filename=:memory:").Options)
-		{
-		}
-
-		private TestDbContext(DbConnection dbConnection)
-			: base(new DbContextOptionsBuilder().UseSqlite(dbConnection).Options)
+		private TestDbContext(string connectionString)
+			: base(new DbContextOptionsBuilder().UseSqlite(connectionString).Options)
 		{
 		}
 	}

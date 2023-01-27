@@ -273,7 +273,7 @@ The section on [integration tests](#integration-testing-the-orchestrating-layer)
 
 ### AvoidFailureOnCommitRetries
 
-Retrying after a failure on commit is [risky](#connection-resilience). By default, in the rare case where a failure on commit is the cause of an exception, this package prevents the retry, letting the exception to bubble up.
+Retrying after a failure on commit is [risky](#connection-resilience). It risks duplicate effects if the original commit turns out to have actually succeeded. By default, in the rare case where a failure on commit is the cause of an exception, scoped execution prevents the retry, letting the exception to bubble up wrapped in an `IOException`.
 
 This recommended feature can be disabled as follows:
 
@@ -355,7 +355,16 @@ When we write unit tests on the orchestrating layer, the persistence code will b
 
 The package provides a `MockDbContextProvider`, which makes it easy to satisfy the dependency while still providing the original flow of execution.
 
-If we do not intend to use an actual DbContext, we can instantiate the mock provider like this:
+If we have a DbContext [factory] available, we can do this:
+
+```cs
+var dbContextProvider = new MockDbContextProvider<MyDbContext>(myDbContextOrDbContextFactory);
+var applicationService = new ApplicationService(dbContextProvider, myRepo);
+```
+
+However, in unit tests, we generally want to avoid letting the DbContext connect to a database. To do so, the recommendation is to use the repository pattern (or any Inversion-of-Control (IoC) pattern) to mock out any queries and calls to `Add` and `AddRange`.
+
+We can have the `MockDbContextProvider` automatically create dummy DbContext instances:
 
 ```cs
 // Alternative with directly used DbContext
@@ -366,20 +375,35 @@ var dbContextProvider = new MockDbContextProvider<IOrderDatabase, OrderDbContext
 var applicationService = new ApplicationService(dbContextProvider, myRepo);
 ```
 
-If we _do_ have a DbContext [factory], we can do this:
+It should be noted that `SaveChanges` throws if the parameterless `MockDbContextProvider` constructor was used. We can cause `SaveChanges` to work by pretending to use a real connection, provided that no entities are added to the change tracker:
 
 ```cs
-var dbContextProvider = new MockDbContextProvider<MyDbContext>(myDbContextOrDbContextFactory);
-var applicationService = new ApplicationService(dbContextProvider, myRepo);
+// Pretend to use a real connection, so that SaveChanges will succeed as long as no entities are added to the change tracker
+// The connection string merely needs to pass some initial validation, not actually work
+// Example using SQL Server
+var dbContextProvider = new MockDbContextProvider<OrderDbContext>(() => new OrderDbContext(
+   new DbContextOptionsBuilder<OrderDbContext>().UseSqlServer(@"Data Source=;").Options));
+
+// ...
+
+this.OrderRepo.Add(order); // Mocked out, to avoid adding entities to the change tracker
+
+// SaveChanges() will succeed as long as the change tracker is empty, because no connection will be opened
+await executionScope.DbContext.SaveChangesAsync(cancellationToken);
+
+// Potential manual calls to CommitTransaction() can be made conditional
+// The execution scope will have started no transaction if SaveChanges() had nothing to save
+if (dbContext.Database.CurrentTransaction is not null)
+   await executionScope.DbContext.Database.CommitTransactionAsync(cancellationToken);
+
+// Test methods could verify that IOrderRepo.Add was invoked, for example
 ```
 
 ## Integration Testing the Orchestrating Layer
 
-For integration tests on the orchestrating layer, if we set things up correctly, there is nothing to do except register an in-memory database provider for Entity Framework. We recommend SQLite, as it can be used to integration test most scenarios in a very realistic way.
+To run integration tests that include database interaction, the recommendation is to use LocalDB and/or docker containers.
 
-Below is an example of how to set up an integration test with Entity Framework. Note that the example works well regardless of whether this package is used.
-
-It helps to remember that xUnit creates a separate instance of the test class for each test method it runs.
+Below is an example of how to set up an integration test with Entity Framework. Note that the example works well regardless of whether the current package is used.
 
 ```cs
 /// <summary>
@@ -387,12 +411,6 @@ It helps to remember that xUnit creates a separate instance of the test class fo
 /// </summary>
 public class OrderApplicationServiceTests : IDisposable
 {
-   /// <summary>
-   /// When SQLite disconnects, the in-memory database is deleted.
-   /// A fixed connection per test ensures that we can perform setup and assertions.
-   /// </summary>
-   private DbConnection Connection { get; } = new SqliteConnection("Filename=:memory:");
-
    /// <summary>
    /// Used to run a test method in an IHost, with a DI container.
    /// </summary>
@@ -411,26 +429,16 @@ public class OrderApplicationServiceTests : IDisposable
       this.Host.Services.GetRequiredService<OrderApplicationService>();
 
    /// <summary>
-   /// An instance of the DbContext, which many tests use for setup or assertions.
-   /// Although a different instance is provided than the one used in the subject under test,
-   /// the fixed DbConnection provides the same underlying data store.
-   /// </summary>
-   private OrderDbContext DbContext => this._dbContext ??=
-      this.Host.Services.GetRequiredService<IDbContextFactory<OrderDbContext>>().CreateDbContext();
-   private OrderDbContext? _dbContext;
-
-   /// <summary>
    /// Test method setup.
    /// </summary>
    public OrderApplicationServiceTests()
    {
-      this.Connection.Open();
-
       // For some reason Entity Framework uses "first registration wins" instead of "last registration wins"
       // So configure the test DbContext FIRST
+      // Alternatively, the production code's registration logic can be used, with the connection string changed via configuration
       this.HostBuilder.ConfigureServices(services =>
          services.AddPooledDbContextFactory<OrderDbContext>(
-            context => context.UseSqlite(this.Connection)));
+            context => context.UseSqlServer(@"Data Source=(LocalDB)\MSSQLLocalDB;Integrated Security=True;Pooling=False;Connect Timeout=15;", sqlServer => sqlServer.EnableRetryOnFailure())));
 
       // Call the method that registers the application's dependencies
       this.HostBuilder.ConfigureServices(services => services.AddOrderApplication());
@@ -441,28 +449,60 @@ public class OrderApplicationServiceTests : IDisposable
    /// </summary>
    public void Dispose()
    {
-      this._dbContext?.Dispose();
-      this.Host.Dispose();
-      this.Connection.Dispose();
+      this._host?.Dispose();
    }
 
    private IHost CreateHost()
    {
       var host = this.HostBuilder.Build();
-      host.Services.GetRequiredService<IDbContextFactory<OrderDbContext>>().CreateDbContext()
-         .Database.EnsureCreated();
+
+      using var dbContext = host.Services.GetRequiredService<IDbContextFactory<OrderDbContext>>().CreateDbContext();
+      dbContext.Database.EnsureCreated();
+
       return host;
+   }
+   
+   /// <summary>
+   /// Creates a DbContext instance to be used for test setup and assertions.
+   /// </summary>
+   private Task<OrderDbContext> CreateDbContextAsync()
+   {
+       return this.Host.Services.GetRequiredService<IDbContextFactory<OrderDbContext>>().CreateDbContextAsync();
    }
 
    /// <summary>
    /// An example test method.
    /// </summary>
    [Fact]
-   public async Task GetOrder_WithNonexistentOrder_ShouldThrow()
+   public async Task AddOrderAsync_Regularly_ShouldHaveExpectedEffect()
    {
-      await Assert.ThrowsAsync<KeyNotFoundException>(() => this.ApplicationService.GetOrder(orderId: 999));
+      // Arrange
+
+      const int customerId = 1;
+
+      await using var dbContext = await this.CreateDbContextAsync();
+
+      dbContext.Set<Customers>().Add(new Customer(customerId));
+      await dbContext.SaveChangesAsync();
+
+      // Ensure that entities are reloaded after acting
+      dbContext.ChangeTracker.Clear();
+
+      // Act
+
+      await this.ApplicationService.AddOrderAsync(customerId, amount: 1.23m);
+
+      // Assert
+
+      var orders = await dbContext.Set<Order>().ToListAsync();
+      var order = Assert.Single(orders);
+      Assert.Equal(customerId, order.CustomerId);
+      Assert.Equal(1.23m, order.Amount);
+
+      var customer = await dbContext.Set<Customer>().SingleAsync();
+      Assert.Equal(1, customer.OrderCount);
    }
-   
+
    // ...
 }
 ```
@@ -476,7 +516,7 @@ Additionally, when `ExecutionStrategyOptions.RetryOnOptimisticConcurrencyFailure
 [Theory]
 [InlineData(false)]
 [InlineData(true)]
-public async Task GetOrderShippingStatus_WithExistingOrder_ShouldReturnExpectedResult(
+public async Task GetOrderShippingStatusAsync_WithExistingOrderAndPossibleRetryAttempt_ShouldReturnExpectedResult(
    bool withConcurrencyException)
 {
    // If withConcurrencyException=true,
@@ -486,7 +526,7 @@ public async Task GetOrderShippingStatus_WithExistingOrder_ShouldReturnExpectedR
       this.HostBuilder.ConfigureServices(services => services
          .AddConcurrencyConflictDbContextProvider<MyDbContext>());
 
-   var result = await this.ApplicationService.GetOrderShippingStatus(orderId: 1);
+   var result = await this.ApplicationService.GetOrderShippingStatusAsync(orderId: 1);
 
    // With or without retry, the result should be as expected
    // Snip: assertions
