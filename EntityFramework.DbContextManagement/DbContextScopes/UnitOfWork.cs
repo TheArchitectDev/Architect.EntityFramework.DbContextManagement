@@ -182,6 +182,14 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 					if (async) await this._dbContext.DisposeAsync().ConfigureAwait(false);
 					else this._dbContext.Dispose();
 				}
+				catch (ObjectDisposedException)
+				{
+					// DbContext is normally resilient to repeated disposing
+					// However, there is a strange bug that has not been minimally reproducible so far
+					// In some cases, such as when Database.EnsureCreated() throws because of a broken entity mapping, something strange happens
+					// DbContext._disposed=false, but on Dispose(), it tries to CreateModel(), accesses its InternalServiceProvider, and throws an ObjectDisposedException, showing _disposed=true from then on
+					// Catching the exception is not an ideal solution, but catches the scenario correctly and SHOULD not affect other scenarios
+				}
 				catch (Exception e)
 				{
 					exceptions = exceptions.Add(e);
@@ -192,7 +200,8 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 				}
 			}
 
-			if (exceptions != ImmutableList<Exception>.Empty) throw new AggregateException(exceptions);
+			if (exceptions != ImmutableList<Exception>.Empty)
+				throw new AggregateException(exceptions);
 		}
 
 		/// <summary>
