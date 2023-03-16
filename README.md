@@ -78,7 +78,7 @@ public class MyRepository : IMyRepository
       return this.DbContext.Orders.SingleOrDefaultAsync(o.Id == id);
    }
 
-   public Task AddOrder(order)
+   public Task AddOrder(Order order)
    {
       return this.DbContext.Orders.AddAsync(order);
    }
