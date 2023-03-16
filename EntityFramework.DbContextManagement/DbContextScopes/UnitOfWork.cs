@@ -188,7 +188,7 @@ namespace Architect.EntityFramework.DbContextManagement.DbContextScopes
 					// However, there is a strange bug that has not been minimally reproducible so far
 					// In some cases, such as when Database.EnsureCreated() throws because of a broken entity mapping, something strange happens
 					// DbContext._disposed=false, but on Dispose(), it tries to CreateModel(), accesses its InternalServiceProvider, and throws an ObjectDisposedException, showing _disposed=true from then on
-					// Catching the exception is not an ideal solution, but catches the scenario correctly and SHOULD not affect other scenarios
+					// Catching the exception is not an ideal solution, but it catches the scenario correctly and SHOULD not affect other scenarios
 				}
 				catch (Exception e)
 				{

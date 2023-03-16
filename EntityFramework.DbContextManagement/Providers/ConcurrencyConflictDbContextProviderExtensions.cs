@@ -42,8 +42,8 @@ namespace Architect.EntityFramework.DbContextManagement
 		{
 			var options = new DbContextScopeExtensions.Options<TDbContext>(services);
 
-			var previousRegistration = services.LastOrDefault(descriptor => descriptor.ServiceType == typeof(IDbContextProvider<TDbContextRepresentation>));
-			if (previousRegistration is null) throw new InvalidOperationException($"No {nameof(IDbContextProvider<TDbContextRepresentation>)} was registered that we could wrap.");
+			var previousRegistration = services.LastOrDefault(descriptor => descriptor.ServiceType == typeof(IDbContextProvider<TDbContextRepresentation>)) ??
+				throw new InvalidOperationException($"No {nameof(IDbContextProvider<TDbContextRepresentation>)} was registered that we could wrap.");
 			var implementationFactory = previousRegistration.ImplementationFactory ??
 				(previousRegistration.ImplementationInstance is not null
 					? _ => previousRegistration.ImplementationInstance

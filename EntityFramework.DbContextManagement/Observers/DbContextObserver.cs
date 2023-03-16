@@ -7,6 +7,7 @@ using System.Transactions;
 using Architect.EntityFramework.DbContextManagement.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Architect.EntityFramework.DbContextManagement.Observers
@@ -44,6 +45,7 @@ namespace Architect.EntityFramework.DbContextManagement.Observers
 
 			// Add interceptors
 			{
+				_ = dbContext.GetService<IInterceptors>(); // Ensure that the interceptors can be accessed, to avoid obscuring exceptions caused by a broken model
 				try
 				{
 					this.SaveInterceptorSwapper = new InterceptorSwapper<ISaveChangesInterceptor>(this.DbContext,

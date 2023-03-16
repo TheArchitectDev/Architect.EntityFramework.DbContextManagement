@@ -23,9 +23,8 @@ namespace Architect.EntityFramework.DbContextManagement.Example
 		{
 			return this.DbContextProvider.ExecuteInDbContextScopeAsync(async _ =>
 			{
-				var order = await this.OrderRepository.LoadById(id);
-
-				if (order is null) throw new KeyNotFoundException($"Order {id} was not found.");
+				var order = await this.OrderRepository.LoadById(id) ??
+					throw new KeyNotFoundException($"Order {id} was not found.");
 
 				Console.WriteLine($"Printing {order}.");
 				Console.WriteLine();
@@ -59,9 +58,8 @@ namespace Architect.EntityFramework.DbContextManagement.Example
 		{
 			return this.DbContextProvider.ExecuteInDbContextScopeAsync(async scope =>
 			{
-				var order = await this.OrderRepository.LoadById(id);
-
-				if (order is null) throw new KeyNotFoundException($"Order {id} was not found.");
+				var order = await this.OrderRepository.LoadById(id) ??
+					throw new KeyNotFoundException($"Order {id} was not found.");
 
 				// Invoke business logic
 				order.Rename(newName);
