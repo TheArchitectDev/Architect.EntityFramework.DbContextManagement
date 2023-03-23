@@ -16,7 +16,7 @@ namespace Architect.EntityFramework.DbContextManagement.Example
 
 			// Alternatively, if the DbContext cannot be registered using a *factory-based* extension method, provide a custom factory to AddDbContextScope
 			//services.AddDbContextScope<ExampleDbContext>(scope =>
-			//	scope.DbContextFactory(() => new ExampleDbContext(new DbContextOptionsBuilder<ExampleDbContext>().UseSqlite(databaseConnectionString).Options)));
+			//	scope.DbContextFactory(() => new ExampleDbContext(new DbContextOptionsBuilder<ExampleDbContext>().UseSqlite("DataSource=DbContextManagementExample;Mode=Memory;Cache=Shared;").Options)));
 
 			// Register the OrderRepository
 			services.AddSingleton<OrderRepository>();
