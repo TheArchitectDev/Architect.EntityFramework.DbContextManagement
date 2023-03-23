@@ -17,7 +17,7 @@ namespace Architect.EntityFramework.DbContextManagement.Example
 			using var host = hostBuilder.Build();
 			startup.Configure(host);
 
-			// To demo with SQLite, keep an in-memory connection open for the lifetime of the application, and seed it
+			// To demo with SQLite, keep an in-memory connection open for the lifetime of the application, and seed the database
 			await using var dbContext = await host.Services.GetRequiredService<IDbContextFactory<ExampleDbContext>>().CreateDbContextAsync();
 			await dbContext.Database.OpenConnectionAsync();
 			await dbContext.Database.EnsureDeletedAsync();
