@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -17,13 +17,11 @@ namespace Architect.EntityFramework.DbContextManagement.Example
 			using var host = hostBuilder.Build();
 			startup.Configure(host);
 
-			// Seed the in-memory database
-			{
-				var dbContextFactory = host.Services.GetRequiredService<IDbContextFactory<ExampleDbContext>>();
-				using var dbContext = dbContextFactory.CreateDbContext();
-				await dbContext.Database.EnsureDeletedAsync();
-				await dbContext.Database.EnsureCreatedAsync();
-			}
+			// To demo with SQLite, keep an in-memory connection open for the lifetime of the application, and seed it
+			await using var dbContext = await host.Services.GetRequiredService<IDbContextFactory<ExampleDbContext>>().CreateDbContextAsync();
+			await dbContext.Database.OpenConnectionAsync();
+			await dbContext.Database.EnsureDeletedAsync();
+			await dbContext.Database.EnsureCreatedAsync();
 
 			await host.StartAsync();
 
