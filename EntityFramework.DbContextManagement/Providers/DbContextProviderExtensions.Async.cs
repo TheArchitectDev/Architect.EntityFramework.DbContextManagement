@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -6,7 +6,6 @@ using Architect.AmbientContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
-// ReSharper disable once CheckNamespace
 namespace Architect.EntityFramework.DbContextManagement
 {
 	public static partial class DbContextProviderExtensions

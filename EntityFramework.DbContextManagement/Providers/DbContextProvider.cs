@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Architect.AmbientContexts;
@@ -6,7 +6,7 @@ using Architect.EntityFramework.DbContextManagement.ExecutionStrategies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
-// ReSharper disable once CheckNamespace
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Architect.EntityFramework.DbContextManagement
 {
 	/// <summary>

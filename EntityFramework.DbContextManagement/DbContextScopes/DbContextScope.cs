@@ -4,7 +4,7 @@ using Architect.AmbientContexts;
 using Architect.EntityFramework.DbContextManagement.DbContextScopes;
 using Microsoft.EntityFrameworkCore;
 
-// ReSharper disable once CheckNamespace
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Architect.EntityFramework.DbContextManagement
 {
 	/// <summary>
