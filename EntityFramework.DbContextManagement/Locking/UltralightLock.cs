@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Architect.EntityFramework.DbContextManagement.Locking
 {
@@ -21,8 +21,8 @@ namespace Architect.EntityFramework.DbContextManagement.Locking
 	{
 		public delegate ref UltralightLock<T> LockGetter(T owner);
 
-		public bool IsDisposed => this._value == Int32.MaxValue;
-		public bool IsUnlocked => this._value == -1;
+		public readonly bool IsDisposed => this._value == Int32.MaxValue;
+		public readonly bool IsUnlocked => this._value == -1;
 
 		internal int _value;
 
@@ -37,7 +37,7 @@ namespace Architect.EntityFramework.DbContextManagement.Locking
 			this.GetLock = getValue;
 		}
 
-		internal void Throw()
+		internal readonly void Throw()
 		{
 			if (this.IsDisposed)
 				throw new ObjectDisposedException(this.Owner?.GetType().Name);

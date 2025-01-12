@@ -10,7 +10,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>2.0.0</VersionPrefix>
+		<VersionPrefix>2.0.1</VersionPrefix>
 		<Description>
 Manage your DbContexts the right way.
 
@@ -19,6 +19,9 @@ The persistence or infrastructure layer uses the DbContext (e.g. from a reposito
 https://github.com/TheArchitectDev/Architect.EntityFramework.DbContextManagement
 
 Release notes:
+
+2.0.1:
+- Enhancement: Upgraded package versions.
 
 2.0.0:
 - BREAKING: Now using AmbientContexts 2.0.0.
@@ -53,7 +56,7 @@ Release notes:
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Architect.AmbientContexts" Version="2.0.0-*" />
+		<PackageReference Include="Architect.AmbientContexts" Version="2.0.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.0" />
 	</ItemGroup>
